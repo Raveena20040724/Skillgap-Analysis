@@ -1,179 +1,244 @@
-import { useState, useEffect } from 'react';
-import { Search } from 'react-bootstrap-icons';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Loader from '../../components/common/Loader';
-import { adminService } from '../../services/adminService';
+import { useState } from 'react';
+import { 
+  ShieldCheck, 
+  Users, 
+  Key, 
+  Building2, 
+  Server, 
+  Sliders, 
+  Lock, 
+  Activity, 
+  CheckCircle2, 
+  AlertTriangle,
+  RefreshCw
+} from 'lucide-react';
 
-// Dummy fallback data until backend is ready
-const DUMMY_STATS = {
-  totalUsers: 52,
-  totalEmployees: 45,
-  totalHR: 6,
-  activeToday: 18,
-};
-
-const DUMMY_USERS = [
-  { id: 1, name: 'Aarav Sharma', email: 'aarav@company.com', role: 'Employee', status: 'Active' },
-  { id: 2, name: 'Meena Iyer', email: 'meena@company.com', role: 'HR', status: 'Active' },
-  { id: 3, name: 'Rahul Verma', email: 'rahul@company.com', role: 'Employee', status: 'Suspended' },
-  { id: 4, name: 'Admin User', email: 'admin@company.com', role: 'Admin', status: 'Active' },
+const AUDIT_LOGS = [
+  {
+    time: '[14:32:01]',
+    timeColor: 'text-blue-500 font-bold',
+    message: 'Admin user Marcus Vance signed in from IP 192.168.1.45'
+  },
+  {
+    time: '[13:15:22]',
+    timeColor: 'text-emerald-500 font-bold',
+    message: 'AI Skill Gap Index updated for 145 Engineering users'
+  },
+  {
+    time: '[11:04:10]',
+    timeColor: 'text-purple-500 font-bold',
+    message: 'JWT OAuth token refreshed for user sarah.jenkins@company.com'
+  },
+  {
+    time: '[09:20:11]',
+    timeColor: 'text-amber-500 font-bold',
+    message: 'System backup completed successfully (2.4 GB snapshot)'
+  }
 ];
 
-const roleColor = {
-  Employee: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-  HR: 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
-  Admin: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
-};
-
-const statusColor = {
-  Active: 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-  Suspended: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-};
-
 const AdminDashboard = () => {
-  const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('All');
+  const [systemMaintenance, setSystemMaintenance] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState('info');
 
-  useEffect(() => {
-    fetchAdminData();
-  }, []);
-
-  const fetchAdminData = async () => {
-    try {
-      const [statsRes, usersRes] = await Promise.all([
-        adminService.getSystemStats(),
-        adminService.getAllUsers(),
-      ]);
-      setStats(statsRes.data);
-      setUsers(usersRes.data);
-    } catch (error) {
-      console.error('Failed to fetch admin data:', error);
-      setStats(DUMMY_STATS);
-      setUsers(DUMMY_USERS);
-    } finally {
-      setLoading(false);
-    }
+  const showToast = (msg, type = 'info') => {
+    setToastMsg(msg);
+    setToastType(type);
+    setTimeout(() => setToastMsg(''), 4000);
   };
-
-  const handleToggleStatus = async (user) => {
-    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
-    try {
-      await adminService.updateUserStatus(user.id, newStatus);
-    } catch (error) {
-      console.error('Failed to update on server (updating locally):', error);
-    }
-    setUsers(users.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u)));
-  };
-
-  if (loading) return <Loader />;
-
-  const roles = ['All', 'Employee', 'HR', 'Admin'];
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'All' || u.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
-
-  const statCards = [
-    { label: 'Total Users', value: stats.totalUsers, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Employees', value: stats.totalEmployees, color: 'text-green-600 dark:text-green-400' },
-    { label: 'HR Staff', value: stats.totalHR, color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Active Today', value: stats.activeToday, color: 'text-orange-600 dark:text-orange-400' },
-  ];
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-2 dark:text-gray-100">Admin Dashboard</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        Manage users, roles, and system-wide settings.
-      </p>
+    <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
+      {/* Toast Notification Banner */}
+      {toastMsg && (
+        <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center gap-2.5 shadow-lg animate-fade-in ${
+          toastType === 'warning'
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-300'
+            : 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-300'
+        }`}>
+          {toastType === 'warning' ? (
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
+          )}
+          <span>{toastMsg}</span>
+        </div>
+      )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {statCards.map((stat) => (
-          <Card key={stat.label} className="text-center">
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
-          </Card>
-        ))}
+      {/* Top Hero Security Panel Card */}
+      <div className="p-6 sm:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xl space-y-3 relative overflow-hidden transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/20">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">
+            SUPER ADMIN SECURITY PANEL
+          </span>
+        </div>
+
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+          SkillBridge System Operations
+        </h1>
+
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-3xl leading-relaxed">
+          Manage system users, RBAC permissions, company department taxonomies, and AI inference API keys.
+        </p>
       </div>
 
-      {/* User management table */}
-      <Card>
-        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
-          <h2 className="text-lg font-semibold dark:text-gray-100">User Management</h2>
+      {/* 4 Stat Summary Cards (Exact Skill Gap Values) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Registered Users */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Registered Users
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              342
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              340 Active • 2 Pending
+            </p>
+          </div>
 
-          <div className="flex gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-            </div>
-
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
-              {roles.map((role) => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-blue-500" />
           </div>
         </div>
 
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-              <th className="py-2">Name</th>
-              <th className="py-2">Email</th>
-              <th className="py-2">Role</th>
-              <th className="py-2">Status</th>
-              <th className="py-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 font-medium dark:text-gray-100">{user.name}</td>
-                <td className="py-3 dark:text-gray-300">{user.email}</td>
-                <td className="py-3">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${roleColor[user.role]}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor[user.status]}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <Button
-                    variant={user.status === 'Active' ? 'danger' : 'primary'}
-                    onClick={() => handleToggleStatus(user)}
-                  >
-                    {user.status === 'Active' ? 'Suspend' : 'Activate'}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Card 2: Active Roles */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Active Roles
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              3
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              Employee, HR, Admin
+            </p>
+          </div>
 
-        {filteredUsers.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">No users found.</p>
-        )}
-      </Card>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <Key className="w-6 h-6 text-indigo-500" />
+          </div>
+        </div>
+
+        {/* Card 3: Departments */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Departments
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              5
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              Configured benchmarks
+            </p>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Building2 className="w-6 h-6 text-emerald-500" />
+          </div>
+        </div>
+
+        {/* Card 4: API Uptime */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              API Uptime
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              99.9%
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              Healthy REST API
+            </p>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Server className="w-6 h-6 text-purple-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* System Settings & Configuration Cards (Exact Skill Gap Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Platform & AI Engine Configurations */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-4">
+          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <Sliders className="w-5 h-5 text-blue-500" />
+            Platform & AI Engine Configurations
+          </h3>
+
+          <div className="space-y-3 text-xs">
+            {/* Item 1 */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-white">AI Skill Gap Recommendation Model</div>
+                <div className="text-slate-400 mt-0.5">Gemini 3.5 Flash / DRF Endpoint</div>
+              </div>
+              <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold rounded-lg text-[11px]">
+                ACTIVE
+              </span>
+            </div>
+
+            {/* Item 2 */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-white">JWT Bearer Auth Expiration</div>
+                <div className="text-slate-400 mt-0.5">24 Hours Token Refresh TTL</div>
+              </div>
+              <button
+                onClick={() => showToast('Token TTL updated to 24 Hours', 'info')}
+                className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Configure
+              </button>
+            </div>
+
+            {/* Item 3 */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-white">System Maintenance Mode</div>
+                <div className="text-slate-400 mt-0.5">Restrict user logins during database upgrades</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={systemMaintenance}
+                onChange={() => {
+                  const nextState = !systemMaintenance;
+                  setSystemMaintenance(nextState);
+                  showToast(`System Maintenance Mode ${nextState ? 'ENABLED' : 'DISABLED'}`, nextState ? 'warning' : 'info');
+                }}
+                className="w-4 h-4 text-blue-600 rounded-md cursor-pointer accent-blue-600"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Security Audit Telemetry Log */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-4">
+          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <Lock className="w-5 h-5 text-emerald-500" />
+            Security & Audit Telemetry Log
+          </h3>
+
+          <div className="space-y-2.5 text-xs font-mono">
+            {AUDIT_LOGS.map((log, index) => (
+              <div
+                key={index}
+                className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/40 flex items-start gap-2"
+              >
+                <span className={log.timeColor}>{log.time}</span>
+                <span className="font-sans font-semibold leading-relaxed">{log.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

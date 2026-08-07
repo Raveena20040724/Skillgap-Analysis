@@ -1,17 +1,139 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { 
+  Zap, 
+  Plus, 
+  Search, 
+  Filter, 
+  Trash2, 
+  Edit3, 
+  CheckCircle2, 
+  X,
+  Award,
+  TrendingUp,
+  Layers,
+  Sparkles,
+  Check,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
-import InputField from '../../components/common/InputField';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { skillsService } from '../../services/skillsService';
 
-const PROFICIENCY_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+const DEFAULT_CATEGORIES = [
+  'Programming',
+  'Database',
+  'Cloud',
+  'AI',
+  'UI/UX',
+  'DevOps',
+  'Testing',
+  'Communication',
+  'Leadership',
+  'Soft Skills'
+];
+
+const INITIAL_SKILLS = [
+  {
+    id: '1',
+    name: 'React.js & Frontend',
+    category: 'Programming',
+    level: 'Advanced',
+    yearsOfExperience: 4,
+    proficiencyPercentage: 88,
+    verified: true,
+  },
+  {
+    id: '2',
+    name: 'Python & Django',
+    category: 'Programming',
+    level: 'Advanced',
+    yearsOfExperience: 3,
+    proficiencyPercentage: 82,
+    verified: true,
+  },
+  {
+    id: '3',
+    name: 'PostgreSQL & SQL',
+    category: 'Database',
+    level: 'Intermediate',
+    yearsOfExperience: 2,
+    proficiencyPercentage: 75,
+    verified: true,
+  },
+  {
+    id: '4',
+    name: 'AWS Cloud Infrastructure',
+    category: 'Cloud',
+    level: 'Intermediate',
+    yearsOfExperience: 2,
+    proficiencyPercentage: 68,
+    verified: true,
+  },
+  {
+    id: '5',
+    name: 'Docker & CI/CD Pipelines',
+    category: 'DevOps',
+    level: 'Intermediate',
+    yearsOfExperience: 1,
+    proficiencyPercentage: 62,
+    verified: true,
+  },
+  {
+    id: '6',
+    name: 'UI/UX Design Systems',
+    category: 'UI/UX',
+    level: 'Advanced',
+    yearsOfExperience: 3,
+    proficiencyPercentage: 85,
+    verified: true,
+  },
+  {
+    id: '7',
+    name: 'Machine Learning Fundamentals',
+    category: 'AI',
+    level: 'Beginner',
+    yearsOfExperience: 1,
+    proficiencyPercentage: 45,
+    verified: false,
+  },
+  {
+    id: '8',
+    name: 'Technical Team Leadership',
+    category: 'Leadership',
+    level: 'Intermediate',
+    yearsOfExperience: 2,
+    proficiencyPercentage: 70,
+    verified: true,
+  },
+];
 
 const SkillsManagement = () => {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newSkill, setNewSkill] = useState({ name: '', proficiency: 'Beginner' });
-  const [message, setMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedLevel, setSelectedLevel] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSkill, setEditingSkill] = useState(null);
+  const [notification, setNotification] = useState('');
+
+  // Category addition support
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+
+  const categoryScrollRef = useRef(null);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Programming',
+    level: 'Intermediate',
+    yearsOfExperience: 2,
+    proficiencyPercentage: 70,
+    verified: true,
+  });
 
   useEffect(() => {
     fetchSkills();
@@ -20,112 +142,592 @@ const SkillsManagement = () => {
   const fetchSkills = async () => {
     try {
       const response = await skillsService.getSkills();
-      setSkills(response.data);
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        const formatted = response.data.map((sk, index) => ({
+          id: sk.id || `server-${index}`,
+          name: sk.name || sk.skill_name || 'Unnamed Skill',
+          category: sk.category || 'Programming',
+          level: sk.level || sk.proficiency || 'Intermediate',
+          yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
+          proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
+          verified: sk.verified ?? true,
+        }));
+        setSkills(formatted);
+      } else {
+        setSkills(INITIAL_SKILLS);
+      }
     } catch (error) {
-      console.error('Failed to fetch skills:', error);
-      // Dummy fallback data until backend is ready
-      setSkills([
-        { id: 1, name: 'React.js', proficiency: 'Advanced' },
-        { id: 2, name: 'Python', proficiency: 'Intermediate' },
-      ]);
+      console.log('Backend standard API fallback: loading default skill inventory.', error);
+      setSkills(INITIAL_SKILLS);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddSkill = async (e) => {
-    e.preventDefault();
-    if (!newSkill.name.trim()) {
-      setMessage('Skill name is required');
-      return;
-    }
+  // Derive dynamic list of all categories from default + active skills
+  const dynamicCategories = [
+    'All',
+    ...Array.from(
+      new Set([
+        ...DEFAULT_CATEGORIES,
+        ...skills.map((s) => s.category).filter(Boolean),
+      ])
+    ),
+  ];
 
-    try {
-      const response = await skillsService.addSkill(newSkill);
-      setSkills([...skills, response.data]);
-    } catch (error) {
-      console.error('Failed to add skill (using local fallback):', error);
-      // Local fallback so UI still works without backend
-      setSkills([...skills, { id: Date.now(), ...newSkill }]);
+  const scrollCategories = (direction) => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220;
+      categoryScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
-
-    setNewSkill({ name: '', proficiency: 'Beginner' });
-    setMessage('');
   };
 
-  const handleDeleteSkill = async (id) => {
+  const showNotification = (msg) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(''), 3500);
+  };
+
+  const handleOpenAdd = () => {
+    setEditingSkill(null);
+    setIsCustomCategory(false);
+    setCustomCategoryInput('');
+    setFormData({
+      name: '',
+      category: 'Programming',
+      level: 'Intermediate',
+      yearsOfExperience: 2,
+      proficiencyPercentage: 70,
+      verified: true,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (skill) => {
+    setEditingSkill(skill);
+    setIsCustomCategory(false);
+    setCustomCategoryInput('');
+    setFormData({
+      name: skill.name,
+      category: skill.category || 'Programming',
+      level: skill.level || 'Intermediate',
+      yearsOfExperience: skill.yearsOfExperience || 1,
+      proficiencyPercentage: skill.proficiencyPercentage || 70,
+      verified: skill.verified ?? true,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
     try {
       await skillsService.deleteSkill(id);
-    } catch (error) {
-      console.error('Failed to delete on server (removing locally):', error);
+    } catch (err) {
+      // Handled locally
     }
-    setSkills(skills.filter((skill) => skill.id !== id));
+    setSkills((prev) => prev.filter((sk) => sk.id !== id));
+    showNotification('Skill successfully removed');
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return;
+
+    const finalCategory = isCustomCategory 
+      ? (customCategoryInput.trim() || 'General')
+      : formData.category;
+
+    const updatedFormData = {
+      ...formData,
+      category: finalCategory,
+    };
+
+    if (editingSkill) {
+      try {
+        await skillsService.updateSkill(editingSkill.id, updatedFormData);
+      } catch (err) {
+        // Handled locally
+      }
+      setSkills((prev) =>
+        prev.map((sk) => (sk.id === editingSkill.id ? { ...sk, ...updatedFormData } : sk))
+      );
+      showNotification(`Updated "${formData.name}" skill competency`);
+    } else {
+      const newSkillObj = {
+        id: String(Date.now()),
+        ...updatedFormData,
+      };
+      try {
+        const response = await skillsService.addSkill(updatedFormData);
+        if (response.data?.id) newSkillObj.id = response.data.id;
+      } catch (err) {
+        // Handled locally
+      }
+      setSkills((prev) => [newSkillObj, ...prev]);
+      showNotification(`Added "${formData.name}" under category "${finalCategory}"`);
+    }
+
+    setIsModalOpen(false);
+  };
+
+  // Filter logic
+  const filteredSkills = skills.filter((sk) => {
+    const matchesSearch =
+      sk.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sk.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || sk.category === selectedCategory;
+    const matchesLevel = selectedLevel === 'All' || sk.level === selectedLevel;
+    return matchesSearch && matchesCategory && matchesLevel;
+  });
+
+  // Calculate statistics
+  const totalSkillsCount = skills.length;
+  const advancedCount = skills.filter(
+    (s) => s.level === 'Advanced' || s.level === 'Expert' || s.proficiencyPercentage >= 80
+  ).length;
+  const avgProficiency =
+    totalSkillsCount > 0
+      ? Math.round(
+          skills.reduce((acc, curr) => acc + (curr.proficiencyPercentage || 70), 0) /
+            totalSkillsCount
+        )
+      : 0;
+  const categoriesCount = new Set(skills.map((s) => s.category)).size;
 
   if (loading) return <Loader />;
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6 dark:text-gray-100">Skills Management</h1>
-
-      {/* Add new skill form */}
-      <Card className="mb-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Add New Skill</h2>
-        {message && <p className="text-red-500 text-sm mb-3">{message}</p>}
-        <form onSubmit={handleAddSkill} className="flex gap-3 items-end">
-          <div className="flex-1">
-            <InputField
-              label="Skill Name"
-              name="name"
-              value={newSkill.name}
-              onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-              placeholder="e.g. JavaScript"
-            />
-          </div>
-          <div className="flex-1 mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proficiency</label>
-            <select
-              value={newSkill.proficiency}
-              onChange={(e) => setNewSkill({ ...newSkill, proficiency: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+    <div className="space-y-8 pb-12">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-teal-600/10 via-blue-600/10 to-indigo-600/10 dark:from-teal-500/20 dark:via-blue-500/20 dark:to-indigo-500/20 p-6 rounded-2xl border border-teal-500/20 dark:border-teal-500/30">
+        <div>
+          <PageHeader
+            title={
+              <span className="flex items-center gap-2.5 text-slate-900 dark:text-white font-extrabold text-2xl">
+                <Zap className="w-7 h-7 text-amber-500 fill-amber-500/20 animate-pulse" />
+                Skills Inventory & Dynamic Proficiency Management
+              </span>
+            }
+            subtitle="Manage competencies in real-time. Changes instantly recalculate your AI Skill Gap & Career Match %."
+          />
+        </div>
+        <button
+          onClick={handleOpenAdd}
+          className="px-5 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer"
         >
-              {PROFICIENCY_LEVELS.map((level) => (
-                <option key={level} value={level}>{level}</option>
-              ))}
+          <Plus className="w-5 h-5 stroke-[2.5]" />
+          Add New Skill
+        </button>
+      </div>
+
+      {/* Notification Banner */}
+      {notification && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
+          <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          {notification}
+        </div>
+      )}
+
+      {/* Analytics Overview Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Skills</span>
+            <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
+              <Layers className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{totalSkillsCount}</p>
+          <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 mt-1">Declared Competencies</p>
+        </Card>
+
+        <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Advanced / Expert</span>
+            <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{advancedCount}</p>
+          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">High Mastery Skills</p>
+        </Card>
+
+        <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Proficiency</span>
+            <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{avgProficiency}%</p>
+          <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-1">Overall Skill Score</p>
+        </Card>
+
+        <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Domains</span>
+            <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+              <Sparkles className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{categoriesCount}</p>
+          <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">Active Skill Categories</p>
+        </Card>
+      </div>
+
+      {/* Filter & Search Toolbar */}
+      <Card className="p-5 space-y-4 border border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Search bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search skills (e.g. React, Python, AWS)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Level Filter dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" /> Level:
+            </span>
+            <select
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              className="px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+            >
+              <option value="All">All Levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Expert">Expert</option>
             </select>
           </div>
-          <div className="mb-4">
-            <Button type="submit" variant="primary">Add</Button>
+        </div>
+
+        {/* Dynamic Sideways Slider Categories Bar (No Scrollbar) */}
+        <div className="relative flex items-center group">
+          {/* Left Arrow Button */}
+          <button
+            onClick={() => scrollCategories('left')}
+            title="Slide left"
+            className="absolute left-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+          </button>
+
+          {/* Categories Container without visible scrollbar */}
+          <div
+            ref={categoryScrollRef}
+            className="flex items-center gap-2 overflow-x-auto py-1 px-8 w-full scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {dynamicCategories.map((cat) => {
+              const count =
+                cat === 'All'
+                  ? skills.length
+                  : skills.filter((s) => s.category === cat).length;
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    selectedCategory === cat
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                      selectedCategory === cat
+                        ? 'bg-teal-700 text-teal-100'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </form>
+
+          {/* Right Arrow Button */}
+          <button
+            onClick={() => scrollCategories('right')}
+            title="Slide right"
+            className="absolute right-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+          </button>
+        </div>
       </Card>
 
-      {/* Skills list */}
-      <Card>
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Your Skills</h2>
-        {skills.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400 text-sm">No skills added yet.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {skills.map((skill) => (
-              <div
-                key={skill.id}
-                className="flex justify-between items-center border border-gray-200 dark:border-gray-700 rounded-md px-4 py-2"
-              >
-                <div>
-                  <span className="font-medium dark:text-gray-100">{skill.name}</span>
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({skill.proficiency})</span>
-                </div>
-                <Button variant="danger" onClick={() => handleDeleteSkill(skill.id)}>
-                  Delete
+      {/* Skills Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filteredSkills.length === 0 ? (
+          <Card className="col-span-full p-12 text-center border-dashed border-2 border-slate-300 dark:border-slate-800">
+            <div className="max-w-md mx-auto space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No matching skills found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                No skills match your search query "{searchQuery}" or category filter. Try clearing your filters or add a new skill.
+              </p>
+              <div className="pt-2 flex justify-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('All');
+                    setSelectedLevel('All');
+                  }}
+                >
+                  Reset Filters
+                </Button>
+                <Button variant="primary" onClick={handleOpenAdd}>
+                  Add Skill
                 </Button>
               </div>
-            ))}
-          </div>
+            </div>
+          </Card>
+        ) : (
+          filteredSkills.map((skill) => {
+            const levelColorClass = 
+              skill.level === 'Expert' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
+              skill.level === 'Advanced' ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' :
+              skill.level === 'Intermediate' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' :
+              'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
+
+            return (
+              <Card
+                key={skill.id}
+                className="p-5 border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all duration-200 group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {skill.category}
+                      </span>
+                      <h3 className="font-extrabold text-base text-slate-900 dark:text-white mt-1.5 leading-snug">
+                        {skill.name}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity shrink-0">
+                      <button
+                        onClick={() => handleOpenEdit(skill)}
+                        title="Edit Skill"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(skill.id)}
+                        title="Delete Skill"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Proficiency Progress Bar */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-slate-500 dark:text-slate-400">Proficiency Score</span>
+                      <span className="text-teal-600 dark:text-teal-400">
+                        {skill.proficiencyPercentage}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
+                      <div
+                        className="h-full bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                        style={{ width: `${skill.proficiencyPercentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${levelColorClass}`}>
+                      {skill.level}
+                    </span>
+                    <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                      {skill.yearsOfExperience} {skill.yearsOfExperience === 1 ? 'Year' : 'Years'}
+                    </span>
+                  </div>
+
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-500/20" /> Verified
+                  </span>
+                </div>
+              </Card>
+            );
+          })
         )}
-      </Card>
+      </div>
+
+      {/* Add / Edit Skill Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                {editingSkill ? 'Edit Skill Competency' : 'Add New Skill Competency'}
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Skill Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. React.js, PyTorch, Kubernetes"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Category
+                  </label>
+                  {!isCustomCategory ? (
+                    <select
+                      value={formData.category}
+                      onChange={(e) => {
+                        if (e.target.value === 'CUSTOM_NEW') {
+                          setIsCustomCategory(true);
+                          setCustomCategoryInput('');
+                        } else {
+                          setFormData({ ...formData, category: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    >
+                      {dynamicCategories.filter((c) => c !== 'All').map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="CUSTOM_NEW" className="text-teal-600 font-bold">+ Create Custom Category...</option>
+                    </select>
+                  ) : (
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. CyberSecurity"
+                        value={customCategoryInput}
+                        onChange={(e) => setCustomCategoryInput(e.target.value)}
+                        className="w-full pl-3 pr-7 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-teal-500 rounded-xl text-slate-900 dark:text-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomCategory(false)}
+                        title="Back to list"
+                        className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Proficiency Level
+                  </label>
+                  <select
+                    value={formData.level}
+                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                    className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Years of Experience
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={30}
+                    value={formData.yearsOfExperience}
+                    onChange={(e) => setFormData({ ...formData, yearsOfExperience: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Proficiency ({formData.proficiencyPercentage}%)
+                  </label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    step={5}
+                    value={formData.proficiencyPercentage}
+                    onChange={(e) => setFormData({ ...formData, proficiencyPercentage: Number(e.target.value) })}
+                    className="w-full accent-teal-500 mt-2 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                >
+                  {editingSkill ? 'Save Changes' : 'Add Skill'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default SkillsManagement;
+

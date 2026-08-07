@@ -1,168 +1,260 @@
-import { useState, useEffect } from 'react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+import { useState } from 'react';
+import { 
+  Users, 
+  Building2, 
+  TrendingUp, 
+  CheckSquare, 
+  BarChart2, 
+  PieChart as PieChartIcon, 
+  Sparkles,
+  ArrowUpRight
+} from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend 
 } from 'recharts';
-import Card from '../../components/common/Card';
-import Loader from '../../components/common/Loader';
-import { hrService } from '../../services/hrService';
-import { Search } from 'react-bootstrap-icons';
-// Dummy fallback data until backend is ready
-const DUMMY_EMPLOYEES = [
-  { id: 1, name: 'Aarav Sharma', department: 'Engineering', skillScore: 78, status: 'On Track' },
-  { id: 2, name: 'Priya Nair', department: 'Engineering', skillScore: 55, status: 'Needs Improvement' },
-  { id: 3, name: 'Rahul Verma', department: 'Data Science', skillScore: 42, status: 'Critical Gap' },
-  { id: 4, name: 'Sneha Iyer', department: 'Design', skillScore: 88, status: 'On Track' },
-  { id: 5, name: 'Karthik Rajan', department: 'Engineering', skillScore: 63, status: 'Needs Improvement' },
+
+// Data for Department Skill Readiness Bar Chart
+const DEPARTMENT_READINESS_DATA = [
+  { department: 'Engineering', readiness: 88 },
+  { department: 'Product', readiness: 84 },
+  { department: 'Design', readiness: 78 },
+  { department: 'DevOps', readiness: 92 },
+  { department: 'Data Science', readiness: 81 },
 ];
-const statusColor = {
-  'On Track': 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-  'Needs Improvement': 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
-  'Critical Gap': 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+
+// Data for Organization Skill Taxonomy Distribution Pie Chart
+const TAXONOMY_DISTRIBUTION_DATA = [
+  { name: 'Frontend', value: 35, color: '#3b82f6' },
+  { name: 'Backend', value: 25, color: '#10b981' },
+  { name: 'Cloud/DevOps', value: 20, color: '#6366f1' },
+  { name: 'AI/ML', value: 12, color: '#f59e0b' },
+  { name: 'UI/UX', value: 8, color: '#06b6d4' },
+];
+
+// Custom Bar Tooltip
+const CustomBarTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold">
+        <p className="text-slate-400 font-semibold">{label}</p>
+        <p className="text-indigo-400 font-extrabold text-sm mt-1">
+          Readiness: {payload[0].value}%
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
-const DUMMY_TEAM_GAPS = [
-  { skill: 'React.js', avgCurrent: 65, avgRequired: 85 },
-  { skill: 'Python', avgCurrent: 55, avgRequired: 80 },
-  { skill: 'SQL', avgCurrent: 60, avgRequired: 75 },
-  { skill: 'Machine Learning', avgCurrent: 35, avgRequired: 70 },
-  { skill: 'Cloud (AWS)', avgCurrent: 40, avgRequired: 75 },
-];
+
+// Custom Pie Tooltip
+const CustomPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold">
+        <p className="font-extrabold text-sm" style={{ color: payload[0].payload.color }}>
+          {payload[0].name}: {payload[0].value}%
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const HrDashboard = () => {
-  const [employees, setEmployees] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('All');
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-  try {
-    const [statsRes, gapsRes, employeesRes] = await Promise.all([
-      hrService.getOverviewStats(),
-      hrService.getTeamSkillGaps(),
-      hrService.getEmployees(),
-    ]);
-    setStats(statsRes.data);
-    setTeamGaps(gapsRes.data);
-    setEmployees(employeesRes.data);
-  } catch (error) {
-    console.error('Failed to fetch HR dashboard data:', error);
-    setStats(DUMMY_STATS);
-    setTeamGaps(DUMMY_TEAM_GAPS);
-    setEmployees(DUMMY_EMPLOYEES);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  if (loading) return <Loader />;
-
-  const statCards = [
-    { label: 'Total Employees', value: stats.totalEmployees, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Avg. Skill Score', value: `${stats.avgSkillScore}%`, color: 'text-green-600 dark:text-green-400' },
-    { label: 'Assessments Completed', value: stats.assessmentsCompleted, color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Critical Skill Gaps', value: stats.criticalGaps, color: 'text-red-600 dark:text-red-400' },
-  ];
-   const departments = ['All', ...new Set(employees.map((e) => e.department))];
-
-   const filteredEmployees = employees.filter((emp) => {
-      const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDept = departmentFilter === 'All' || emp.department === departmentFilter;
-      return matchesSearch && matchesDept;
-   });
   return (
-    <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-2 dark:text-gray-100">HR Analytics Dashboard</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        Organization-wide overview of employee skills and gaps.
-      </p>
+    <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
+      {/* Top Hero Gradient Banner (Matching Photo) */}
+      <div className="p-8 md:p-10 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 text-white rounded-3xl shadow-2xl space-y-3 relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 transform pointer-events-none"></div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {statCards.map((stat) => (
-          <Card key={stat.label} className="text-center">
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
-          </Card>
-        ))}
+        <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white/20 text-white backdrop-blur-md border border-white/30 inline-block">
+          HR Command & Workforce Analytics
+        </span>
+
+        <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white leading-tight">
+          Organization Skill Readiness Portal
+        </h1>
+
+        <p className="text-xs md:text-sm font-medium text-indigo-100 max-w-3xl leading-relaxed">
+          Real-time talent telemetry across 5 departments and 342 active employees. Average skill readiness index is <strong className="text-emerald-300 font-black">83.4%</strong>.
+        </p>
       </div>
 
-      {/* Team-wide skill gap chart */}
-      <Card>
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Team-wide Skill Gaps (Average)</h2>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={teamGaps} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="skill" angle={-20} textAnchor="end" interval={0} height={60} />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="avgCurrent" fill="#3B82F6" name="Avg Current Level (%)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="avgRequired" fill="#93C5FD" name="Avg Required Level (%)" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
-      {/* Employee Table */}
-<Card className="mt-6">
-  <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
-    <h2 className="text-lg font-semibold dark:text-gray-100">Employee Overview</h2>
+      {/* 4 Stat Summary Cards (Matching Photo) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {/* Card 1: Total Workforce */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Total Workforce
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              342
+            </p>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+              <span className="text-emerald-500 font-black">+12 this month</span>
+              <span>• Active Employees</span>
+            </div>
+          </div>
 
-    <div className="flex gap-3">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-        <input
-          type="text"
-          placeholder="Search employee..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9 pr-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-        />
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-blue-500" />
+          </div>
+        </div>
+
+        {/* Card 2: Departments */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Departments
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              5
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              Monitored teams
+            </p>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Building2 className="w-6 h-6 text-purple-500" />
+          </div>
+        </div>
+
+        {/* Card 3: Workforce Readiness */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Workforce Readiness
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              83.4%
+            </p>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+              <span className="text-emerald-500 font-black">+4.2% YoY</span>
+              <span>• Target skill match</span>
+            </div>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-6 h-6 text-emerald-500" />
+          </div>
+        </div>
+
+        {/* Card 4: Assessment Completion */}
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Assessment Completion
+            </p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              91%
+            </p>
+            <p className="text-xs font-semibold text-slate-400">
+              Monthly quota
+            </p>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-6 h-6 text-purple-500" />
+          </div>
+        </div>
       </div>
 
-      {/* Department filter */}
-      <select
-        value={departmentFilter}
-        onChange={(e) => setDepartmentFilter(e.target.value)}
-        className="px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-      >
-        {departments.map((dept) => (
-          <option key={dept} value={dept}>{dept}</option>
-        ))}
-      </select>
-    </div>
-  </div>
+      {/* Two Large Chart Panels (Matching Photo) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Chart Card: Department Skill Readiness Score (Bar Chart) */}
+        <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <BarChart2 className="w-5 h-5 text-indigo-500" />
+              Department Skill Readiness Score (Bar Chart)
+            </h2>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Average skill benchmark score per department
+            </p>
+          </div>
 
-  <table className="w-full text-sm">
-    <thead>
-      <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-        <th className="py-2">Name</th>
-        <th className="py-2">Department</th>
-        <th className="py-2">Skill Score</th>
-        <th className="py-2">Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {filteredEmployees.map((emp) => (
-        <tr key={emp.id} className="border-b border-gray-100 dark:border-gray-800">
-          <td className="py-3 font-medium dark:text-gray-100">{emp.name}</td>
-          <td className="py-3 dark:text-gray-300">{emp.department}</td>
-          <td className="py-3 dark:text-gray-300">{emp.skillScore}%</td>
-          <td className="py-3">
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor[emp.status]}`}>
-              {emp.status}
-            </span>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={DEPARTMENT_READINESS_DATA} 
+                margin={{ top: 15, right: 20, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                <XAxis 
+                  dataKey="department" 
+                  stroke="#94a3b8" 
+                  fontSize={11} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <YAxis 
+                  domain={[0, 100]} 
+                  ticks={[0, 25, 50, 75, 100]} 
+                  stroke="#94a3b8" 
+                  fontSize={11} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <Tooltip content={<CustomBarTooltip />} />
+                <Bar dataKey="readiness" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-  {filteredEmployees.length === 0 && (
-    <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">No employees found.</p>
-  )}
-</Card>
+        {/* Right Chart Card: Organization Skill Taxonomy Distribution (Pie Chart) */}
+        <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-emerald-500" />
+              Organization Skill Taxonomy Distribution (Pie Chart)
+            </h2>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Domain representation across engineering & product
+            </p>
+          </div>
+
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={TAXONOMY_DISTRIBUTION_DATA}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={95}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {TAXONOMY_DISTRIBUTION_DATA.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomPieTooltip />} />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36} 
+                  formatter={(value) => <span className="text-xs font-bold text-slate-600 dark:text-slate-300 ml-1">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

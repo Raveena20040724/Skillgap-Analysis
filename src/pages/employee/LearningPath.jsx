@@ -1,121 +1,302 @@
-import { useState, useEffect } from 'react';
-import Card from '../../components/common/Card';
-import Loader from '../../components/common/Loader';
-import { learningPathService } from '../../services/learningPathService';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  CheckCircle2, 
+  Clock, 
+  BookOpen, 
+  Layers, 
+  ArrowRight, 
+  Award,
+  Sparkles,
+  ChevronRight,
+  XCircle,
+  Play
+} from 'lucide-react';
+import Button from '../../components/common/Button';
+import { ROUTES } from '../../constants/routes';
 
-// Dummy fallback data until backend is ready
-const DUMMY_PATH = [
+const STAGES = [
   {
     id: 1,
-    title: 'Master React Fundamentals',
-    description: 'Complete advanced React concepts - Context API, custom hooks, performance optimization.',
+    stageLevel: 'BEGINNER STAGE',
+    stageLevelBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+    duration: '4 Weeks',
+    title: 'Foundation & Modern Core',
     status: 'completed',
-    duration: '2 weeks',
+    statusLabel: '✓ Stage Completed',
+    statusBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+    courses: [
+      'Modern TypeScript Design Patterns',
+      'Advanced React 18 Patterns'
+    ],
+    projects: [
+      'Responsive Component Library with Tailwind'
+    ],
+    credentials: 'Meta Frontend Professional'
   },
   {
     id: 2,
-    title: 'Learn TypeScript',
-    description: 'Add type safety to your React applications for better code quality.',
-    status: 'in-progress',
-    duration: '3 weeks',
+    stageLevel: 'INTERMEDIATE STAGE',
+    stageLevelBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+    duration: '6 Weeks',
+    title: 'State Architecture & Performance',
+    status: 'completed',
+    statusLabel: '✓ Stage Completed',
+    statusBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+    courses: [
+      'Redux Toolkit & Zustand Mastery',
+      'Web Vitals & Performance Optimization'
+    ],
+    projects: [
+      'High-Throughput Financial Dashboard'
+    ],
+    credentials: 'Senior React Developer Certificate'
   },
   {
     id: 3,
-    title: 'Testing with Jest & React Testing Library',
-    description: 'Learn unit and integration testing for React components.',
-    status: 'pending',
-    duration: '2 weeks',
+    stageLevel: 'ADVANCED STAGE',
+    stageLevelBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+    duration: '8 Weeks',
+    title: 'Micro-Frontends & Design Systems',
+    status: 'in-progress',
+    statusLabel: 'In Progress',
+    statusBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+    courses: [
+      'Module Federation & Micro-frontends',
+      'Enterprise Design System Engineering'
+    ],
+    projects: [
+      'Enterprise Multi-App Design System v3'
+    ],
+    credentials: 'Frontend System Architect Certification'
   },
   {
     id: 4,
-    title: 'Advanced State Management',
-    description: 'Explore Redux Toolkit or Zustand for complex application state.',
-    status: 'pending',
-    duration: '2 weeks',
-  },
+    stageLevel: 'EXPERT STAGE',
+    stageLevelBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
+    duration: '6 Weeks',
+    title: 'AI Integration & WebAssembly',
+    status: 'upcoming',
+    statusLabel: 'Upcoming',
+    statusBg: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/30',
+    courses: [
+      'Client-Side AI & Vector Embeddings',
+      'WebAssembly & C++ Modules in Web Apps'
+    ],
+    projects: [
+      'In-Browser AI Code Assistant Extension'
+    ],
+    credentials: 'AI Web Application Specialist'
+  }
 ];
 
-const statusConfig = {
-  completed: { label: 'Completed', color: 'bg-green-500', textColor: 'text-green-600', ring: 'ring-green-200' },
-  'in-progress': { label: 'In Progress', color: 'bg-blue-500', textColor: 'text-blue-600', ring: 'ring-blue-200' },
-  pending: { label: 'Pending', color: 'bg-gray-300', textColor: 'text-gray-500', ring: 'ring-gray-200' },
-};
-
 const LearningPath = () => {
-  const [steps, setSteps] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [selectedStage, setSelectedStage] = useState(null);
 
-  useEffect(() => {
-    fetchPath();
-  }, []);
-
-  const fetchPath = async () => {
-    try {
-      const response = await learningPathService.getLearningPath();
-      setSteps(response.data);
-    } catch (error) {
-      console.error('Failed to fetch learning path:', error);
-      setSteps(DUMMY_PATH);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <Loader />;
-
-  const completedCount = steps.filter((s) => s.status === 'completed').length;
-  const progressPercentage = Math.round((completedCount / steps.length) * 100);
+  const completedCount = STAGES.filter((s) => s.status === 'completed').length;
+  const progressPercentage = Math.round((completedCount / STAGES.length) * 100);
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-2 dark:text-gray-100">Personalized Learning Path</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        A step-by-step plan to close your skill gaps and reach your career goal.
-      </p>
-
-      {/* Overall progress */}
-      <Card className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
-          <span className="text-sm font-semibold text-blue-600">{progressPercentage}%</span>
+    <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-fade-in">
+      {/* Top Banner Box Matching Photo */}
+      <div className="p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
+        <div className="space-y-3">
+          <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 inline-block">
+            Dynamic AI Roadmap
+          </span>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Learning Path for Principal Frontend Architect
+          </h1>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            Estimated Total Duration: <strong className="text-slate-800 dark:text-slate-200">6 Months</strong> • Completed Steps: <strong className="text-slate-800 dark:text-slate-200">{completedCount}/{STAGES.length}</strong>
+          </p>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-      </Card>
 
-      {/* Timeline */}
-      <div className="relative">
-        {steps.map((step, index) => {
-          const config = statusConfig[step.status];
-          const isLast = index === steps.length - 1;
+        {/* Path Completion Box */}
+        <div className="p-5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-slate-800 rounded-2xl text-center min-w-[170px] shrink-0">
+          <div className="text-3xl font-black text-emerald-500 dark:text-emerald-400 leading-none">
+            {progressPercentage}%
+          </div>
+          <div className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-400 mt-1">
+            PATH COMPLETION
+          </div>
+        </div>
+      </div>
+
+      {/* Vertical Timeline Roadmap */}
+      <div className="relative pl-3 md:pl-6 space-y-8">
+        {/* Timeline Connecting Vertical Line */}
+        <div className="absolute left-[22px] md:left-[34px] top-6 bottom-6 w-0.5 bg-slate-200 dark:bg-slate-800 z-0"></div>
+
+        {STAGES.map((stage) => {
+          const isCompleted = stage.status === 'completed';
+          const isInProgress = stage.status === 'in-progress';
 
           return (
-            <div key={step.id} className="flex gap-4 relative">
-              {/* Timeline marker + connecting line */}
-              <div className="flex flex-col items-center">
-                <div className={`w-4 h-4 rounded-full ${config.color} ring-4 ${config.ring} z-10`}></div>
-                {!isLast && <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-700 my-1"></div>}
+            <div key={stage.id} className="relative flex items-start gap-4 md:gap-6 z-10">
+              {/* Timeline Marker Node Icon */}
+              <div className="shrink-0 mt-6">
+                {isCompleted ? (
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-emerald-500 shadow-md shadow-emerald-500/20">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                ) : isInProgress ? (
+                  <div className="w-8 h-8 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center text-blue-500 shadow-md shadow-blue-500/20 animate-pulse">
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                  </div>
+                )}
               </div>
 
-              {/* Step content */}
-              <Card className={`mb-4 flex-1 ${step.status === 'in-progress' ? 'border-2 border-blue-200' : ''}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold dark:text-gray-100">{step.title}</h3>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${config.textColor} bg-opacity-10`}>
-                    {config.label}
+              {/* Stage Card Box */}
+              <div
+                className={`flex-1 p-6 md:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border rounded-3xl shadow-xl transition-all duration-300 space-y-6 ${
+                  isInProgress
+                    ? 'border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20'
+                    : 'border-slate-200/90 dark:border-slate-800'
+                }`}
+              >
+                {/* Stage Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${stage.stageLevelBg}`}>
+                      {stage.stageLevel}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      {stage.duration}
+                    </span>
+                  </div>
+
+                  <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${stage.statusBg}`}>
+                    {stage.statusLabel}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{step.description}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Estimated duration: {step.duration}</p>
-              </Card>
+
+                {/* Stage Title */}
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
+                  {stage.title}
+                </h2>
+
+                {/* Content Columns: Key Courses & Real-World Projects */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  {/* Key Courses Column */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-blue-500" />
+                      Key Courses
+                    </h4>
+                    <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {stage.courses.map((course, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                          {course}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Real-World Projects Column */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-emerald-500" />
+                      Real-World Projects
+                    </h4>
+                    <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {stage.projects.map((project, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          {project}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Footer Row: Credentials & View Modules Link */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    Target Credentials: <strong className="text-slate-900 dark:text-white">{stage.credentials}</strong>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedStage(stage)}
+                    className="text-xs font-extrabold text-blue-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Step Modules</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* Stage Step Modules Modal */}
+      {selectedStage && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 animate-scale-up">
+            <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${selectedStage.stageLevelBg}`}>
+                  {selectedStage.stageLevel}
+                </span>
+                <h3 className="font-extrabold text-xl text-slate-900 dark:text-white mt-2">
+                  {selectedStage.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedStage(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Curriculum Courses</h4>
+                <div className="space-y-2 mt-2">
+                  {selectedStage.courses.map((c, i) => (
+                    <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                      <span>{c}</span>
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-extrabold uppercase">3 Modules</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Hands-on Capstone Project</h4>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 mt-2">
+                  {selectedStage.projects[0]}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <Button variant="outline" onClick={() => setSelectedStage(null)}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setSelectedStage(null);
+                  navigate(ROUTES.COURSE_RECOMMENDATIONS);
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Explore Courses
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

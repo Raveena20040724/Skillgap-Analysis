@@ -19,10 +19,19 @@ export const ROUTES = {
   LEARNING_PATH: '/employee/learning-path',
   COURSE_RECOMMENDATIONS: '/employee/courses',
   PROGRESS_TRACKING: '/employee/progress',
+  NOTIFICATIONS: '/employee/notifications',
+  SETTINGS: '/employee/settings',
 
   // HR
   HR_DASHBOARD: '/hr/dashboard',
+  HR_DIRECTORY: '/hr/directory',
+  HR_REPORTS: '/hr/reports',
 
   // Admin
   ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_ROLES: '/admin/roles',
+  ADMIN_DEPARTMENTS: '/admin/departments',
+  ADMIN_REPORTS: '/admin/reports',
+  ADMIN_SETTINGS: '/admin/settings',
 };

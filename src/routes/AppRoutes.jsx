@@ -21,10 +21,19 @@ import CareerRecommendations from '../pages/employee/CareerRecommendations';
 import LearningPath from '../pages/employee/LearningPath';
 import CourseRecommendations from '../pages/employee/CourseRecommendations';
 import ProgressTracking from '../pages/employee/ProgressTracking';
+import NotificationsPage from '../pages/employee/NotificationsPage';
+import SettingsPage from '../pages/employee/SettingsPage';
 
 // HR / Admin
 import HrDashboard from '../pages/hr/HrDashboard';
+import EmployeeDirectory from '../pages/hr/EmployeeDirectory';
+import HrReports from '../pages/hr/HrReports';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import UserManagement from '../pages/admin/UserManagement';
+import RolesAccess from '../pages/admin/RolesAccess';
+import DepartmentsManagement from '../pages/admin/DepartmentsManagement';
+import SystemReports from '../pages/admin/SystemReports';
+import SystemSettings from '../pages/admin/SystemSettings';
 
 const AppRoutes = () => {
   return (
@@ -35,7 +44,7 @@ const AppRoutes = () => {
       <Route path={ROUTES.HR_LOGIN} element={<HrLogin />} />
       <Route path={ROUTES.ADMIN_LOGIN} element={<AdminLogin />} />
 
-      {/* Protected - Employee (nested inside DashboardLayout) */}
+      {/* Protected Layout */}
       <Route
         element={
           <ProtectedRoute>
@@ -54,11 +63,20 @@ const AppRoutes = () => {
         <Route path={ROUTES.LEARNING_PATH} element={<LearningPath />} />
         <Route path={ROUTES.COURSE_RECOMMENDATIONS} element={<CourseRecommendations />} />
         <Route path={ROUTES.PROGRESS_TRACKING} element={<ProgressTracking />} />
-      </Route>
+        <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+        <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
 
-      {/* HR / Admin - kept separate for now */}
-      <Route path={ROUTES.HR_DASHBOARD} element={<ProtectedRoute><HrDashboard /></ProtectedRoute>} />
-      <Route path={ROUTES.ADMIN_DASHBOARD} element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        {/* HR & Admin routes */}
+        <Route path={ROUTES.HR_DASHBOARD} element={<HrDashboard />} />
+        <Route path={ROUTES.HR_DIRECTORY} element={<EmployeeDirectory />} />
+        <Route path={ROUTES.HR_REPORTS} element={<HrReports />} />
+        <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+        <Route path={ROUTES.ADMIN_USERS} element={<UserManagement />} />
+        <Route path={ROUTES.ADMIN_ROLES} element={<RolesAccess />} />
+        <Route path={ROUTES.ADMIN_DEPARTMENTS} element={<DepartmentsManagement />} />
+        <Route path={ROUTES.ADMIN_REPORTS} element={<SystemReports />} />
+        <Route path={ROUTES.ADMIN_SETTINGS} element={<SystemSettings />} />
+      </Route>
 
       {/* Default */}
       <Route path="/" element={<EmployeeLogin />} />

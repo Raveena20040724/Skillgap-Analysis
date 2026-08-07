@@ -1,115 +1,260 @@
-import { useState, useEffect } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+import { useState } from 'react';
+import { 
+  BarChart2, 
+  Clock, 
+  BookOpen, 
+  Award, 
+  CheckSquare, 
+  TrendingUp, 
+  Calendar 
+} from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Cell 
 } from 'recharts';
-import Card from '../../components/common/Card';
-import Loader from '../../components/common/Loader';
-import { progressService } from '../../services/progressService';
 
-// Dummy fallback data until backend is ready
-const DUMMY_PROGRESS = {
-  stats: {
-    skillsImproved: 5,
-    coursesCompleted: 3,
-    assessmentsTaken: 4,
-    overallGrowth: 32,
-  },
-  monthlyProgress: [
-    { month: 'Mar', score: 40 },
-    { month: 'Apr', score: 48 },
-    { month: 'May', score: 55 },
-    { month: 'Jun', score: 62 },
-    { month: 'Jul', score: 70 },
-    { month: 'Aug', score: 72 },
-  ],
-  recentActivity: [
-    { id: 1, activity: 'Completed "Advanced TypeScript" course', date: '2026-08-02' },
-    { id: 2, activity: 'Retook Skill Assessment - React.js', date: '2026-07-28' },
-    { id: 3, activity: 'Updated Skills Profile', date: '2026-07-20' },
-    { id: 4, activity: 'Completed "Testing with Jest" course', date: '2026-07-10' },
-  ],
+// Data for Line Chart (Jan - Jul)
+const SKILL_GROWTH_DATA = [
+  { month: 'Jan', score: 65 },
+  { month: 'Feb', score: 68 },
+  { month: 'Mar', score: 73 },
+  { month: 'Apr', score: 76 },
+  { month: 'May', score: 80 },
+  { month: 'Jun', score: 82 },
+  { month: 'Jul', score: 86 },
+];
+
+// Data for Bar Chart (Mon - Sun)
+const WEEKLY_HOURS_DATA = [
+  { day: 'Mon', hours: 2.5 },
+  { day: 'Tue', hours: 3.0 },
+  { day: 'Wed', hours: 0.0 },
+  { day: 'Thu', hours: 4.0 },
+  { day: 'Fri', hours: 2.0 },
+  { day: 'Sat', hours: 1.0 },
+  { day: 'Sun', hours: 0.5 },
+];
+
+// Custom Bar Tooltip matching the photo tooltip style (white popup box)
+const CustomBarTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white text-slate-900 p-2.5 rounded-xl shadow-xl border border-slate-200 text-xs font-bold text-center">
+        <p className="text-slate-500 font-semibold text-[11px]">{label}</p>
+        <p className="text-emerald-600 font-extrabold text-sm mt-0.5">
+          hours : {payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom Line Tooltip
+const CustomLineTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-xl border border-slate-700 text-xs font-bold text-center">
+        <p className="text-slate-400 font-semibold text-[11px]">{label}</p>
+        <p className="text-blue-400 font-extrabold text-sm mt-0.5">
+          Score : {payload[0].value}%
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
 
 const ProgressTracking = () => {
-  const [progress, setProgress] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProgress();
-  }, []);
-
-  const fetchProgress = async () => {
-    try {
-      const response = await progressService.getProgress();
-      setProgress(response.data);
-    } catch (error) {
-      console.error('Failed to fetch progress:', error);
-      setProgress(DUMMY_PROGRESS);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <Loader />;
-
-  const { stats, monthlyProgress, recentActivity } = progress;
-
-  const statCards = [
-    { label: 'Skills Improved', value: stats.skillsImproved, color: 'text-blue-600' },
-    { label: 'Courses Completed', value: stats.coursesCompleted, color: 'text-green-600' },
-    { label: 'Assessments Taken', value: stats.assessmentsTaken, color: 'text-purple-600' },
-    { label: 'Overall Growth', value: `${stats.overallGrowth}%`, color: 'text-orange-600' },
-  ];
+  const [activeIndex, setActiveIndex] = useState(1); // Tuesday active bar
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-2xl font-bold mb-6 dark:text-gray-100">Progress Tracking</h1>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {statCards.map((stat) => (
-          <Card key={stat.label} className="text-center">
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
-          </Card>
-        ))}
+    <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <BarChart2 className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+          Employee Learning Progress & Growth Tracking
+        </h1>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Historical analysis of your skill acquisition rate, weekly learning commitment, and assessment benchmark scores.
+        </p>
       </div>
 
-      {/* Progress trend chart */}
-      <Card className="mb-6">
-        <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Skill Score Trend (Last 6 Months)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={monthlyProgress} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="score"
-              stroke="#3B82F6"
-              strokeWidth={2}
-              dot={{ fill: '#3B82F6', r: 4 }}
-              name="Overall Score"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
-
-      {/* Recent activity */}
-      <Card>
-        <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Recent Activity</h2>
-        <div className="flex flex-col gap-3">
-          {recentActivity.map((item) => (
-            <div key={item.id} className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-              <p className="text-sm text-gray-700 dark:text-gray-300">{item.activity}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
-                {new Date(item.date).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
+      {/* Top 4 Stat Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+        {/* Card 1: Total Learning Hours */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6 text-purple-500" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Total Learning Hours
+            </p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              114 hrs
+            </p>
+          </div>
         </div>
-      </Card>
+
+        {/* Card 2: Completed Courses */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <BookOpen className="w-6 h-6 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Completed Courses
+            </p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              6 Courses
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Certificates Earned */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Award className="w-6 h-6 text-emerald-500" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Certificates Earned
+            </p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              4 Certs
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Avg Assessment Score */}
+        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-6 h-6 text-amber-500" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              Avg Assessment Score
+            </p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              91.6%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Two Large Chart Panels (Matching Photo) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Chart Card: Skill Growth Evolution (Line Chart) */}
+        <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              Skill Growth Evolution (Line Chart)
+            </h2>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Overall readiness index progression Jan - Jul
+            </p>
+          </div>
+
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={SKILL_GROWTH_DATA} margin={{ top: 15, right: 20, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <YAxis 
+                  domain={[50, 100]} 
+                  ticks={[50, 65, 80, 100]} 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <Tooltip content={<CustomLineTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#3b82f6"
+                  strokeWidth={3.5}
+                  dot={{ fill: '#3b82f6', r: 5, strokeWidth: 3, stroke: '#ffffff' }}
+                  activeDot={{ r: 7, strokeWidth: 3, stroke: '#ffffff' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Right Chart Card: Weekly Learning Hours Log (Bar Chart) */}
+        <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-emerald-500" />
+              Weekly Learning Hours Log (Bar Chart)
+            </h2>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Daily time spent on courses & practice tasks
+            </p>
+          </div>
+
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={WEEKLY_HOURS_DATA} 
+                margin={{ top: 15, right: 20, left: -20, bottom: 0 }}
+                onMouseMove={(state) => {
+                  if (state.isTooltipActive) setActiveIndex(state.activeTooltipIndex);
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <YAxis 
+                  domain={[0, 4]} 
+                  ticks={[0, 1, 2, 3, 4]} 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  fontWeight={600} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#475569' }} 
+                />
+                <Tooltip content={<CustomBarTooltip />} />
+                <Bar dataKey="hours" radius={[8, 8, 0, 0]}>
+                  {WEEKLY_HOURS_DATA.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={index === activeIndex ? '#10b981' : '#10b981'} 
+                      opacity={index === activeIndex ? 1 : 0.85}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

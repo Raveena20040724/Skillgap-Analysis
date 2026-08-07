@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import Card from '../../components/common/Card';
 import Loader from '../../components/common/Loader';
+import PageHeader from '../../components/common/PageHeader';
 import { skillGapService } from '../../services/skillGapService';
 
 // Dummy fallback data until backend is ready
@@ -20,15 +21,15 @@ const SkillGapResults = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchGapResults();
+    fetchSkillGaps();
   }, []);
 
-  const fetchGapResults = async () => {
+  const fetchSkillGaps = async () => {
     try {
       const response = await skillGapService.getSkillGapResults();
-      setGapData(response.data);
+      setGapData(response.data || DUMMY_DATA);
     } catch (error) {
-      console.error('Failed to fetch skill gap results:', error);
+      console.error('Failed to fetch skill gaps:', error);
       setGapData(DUMMY_DATA);
     } finally {
       setLoading(false);
@@ -37,71 +38,74 @@ const SkillGapResults = () => {
 
   if (loading) return <Loader />;
 
-  // Calculate biggest gaps for summary cards
-  const gapsWithDiff = gapData.map((item) => ({
+  const gapsWithDiff = (gapData.length ? gapData : DUMMY_DATA).map((item) => ({
     ...item,
-    gap: item.requiredLevel - item.currentLevel,
+    gap: Math.max(0, item.requiredLevel - item.currentLevel),
   }));
-  const biggestGap = [...gapsWithDiff].sort((a, b) => b.gap - a.gap)[0];
-  const strongestSkill = [...gapsWithDiff].sort((a, b) => a.gap - b.gap)[0];
+
+  const biggestGap = [...gapsWithDiff].sort((a, b) => b.gap - a.gap)[0] || gapsWithDiff[0];
+  const strongestSkill = [...gapsWithDiff].sort((a, b) => a.gap - b.gap)[0] || gapsWithDiff[0];
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-2xl font-bold mb-6 dark:text-gray-100">Skill Gap Analysis Results</h1>
+    <div className="space-y-6">
+      <PageHeader 
+        title="Skill Gap Analysis Results" 
+        subtitle="Compare your current skill ratings against target role requirements."
+      />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card className="border-l-4 border-red-500">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Biggest Skill Gap</p>
-          <p className="text-lg font-semibold mt-1 dark:text-gray-100">{biggestGap.skill}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Gap: {biggestGap.gap}% (Current {biggestGap.currentLevel}% → Required {biggestGap.requiredLevel}%)
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-l-4 border-rose-500 p-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Biggest Skill Gap</p>
+          <p className="text-xl font-bold mt-1 text-slate-900 dark:text-white">{biggestGap.skill}</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
+            Gap: <span className="font-bold text-rose-600 dark:text-rose-400">{biggestGap.gap}%</span> (Current {biggestGap.currentLevel}% → Required {biggestGap.requiredLevel}%)
           </p>
         </Card>
-        <Card className="border-l-4 border-green-500">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Strongest Skill</p>
-          <p className="text-lg font-semibold mt-1 dark:text-gray-100">{strongestSkill.skill}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Current {strongestSkill.currentLevel}% (Required {strongestSkill.requiredLevel}%)
+        <Card className="border-l-4 border-emerald-500 p-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Strongest Skill</p>
+          <p className="text-xl font-bold mt-1 text-slate-900 dark:text-white">{strongestSkill.skill}</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
+            Current <span className="font-bold text-emerald-600 dark:text-emerald-400">{strongestSkill.currentLevel}%</span> (Required {strongestSkill.requiredLevel}%)
           </p>
         </Card>
       </div>
 
       {/* Bar chart comparing current vs required */}
-      <Card className="mb-6">
-        <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Current vs Required Skill Levels</h2>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={gapData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="skill" angle={-20} textAnchor="end" interval={0} height={60} />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
+      <Card className="p-6">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Current vs Required Skill Levels</h2>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={gapsWithDiff} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
+            <XAxis dataKey="skill" angle={-20} textAnchor="end" interval={0} height={60} stroke="#94a3b8" fontSize={12} />
+            <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={12} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
             <Legend />
-            <Bar dataKey="currentLevel" fill="#3B82F6" name="Current Level (%)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="requiredLevel" fill="#93C5FD" name="Required Level (%)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="currentLevel" fill="#2563eb" name="Current Level (%)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="requiredLevel" fill="#14b8a6" name="Required Level (%)" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
       {/* Detailed table */}
-      <Card>
-        <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Detailed Breakdown</h2>
-        <table className="w-full text-sm">
+      <Card className="p-6">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Detailed Breakdown</h2>
+        <table className="w-full text-sm text-left">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-              <th className="py-2">Skill</th>
-              <th className="py-2">Current</th>
-              <th className="py-2">Required</th>
-              <th className="py-2">Gap</th>
+            <tr className="border-b border-slate-200 dark:border-slate-700/80 text-xs uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+              <th className="py-3 px-2">Skill</th>
+              <th className="py-3 px-2">Current</th>
+              <th className="py-3 px-2">Required</th>
+              <th className="py-3 px-2">Gap</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {gapsWithDiff.map((item) => (
-              <tr key={item.skill} className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 font-medium dark:text-gray-100">{item.skill}</td>
-                <td className="py-3 dark:text-gray-300">{item.currentLevel}%</td>
-                <td className="py-3 dark:text-gray-300">{item.requiredLevel}%</td>
-                <td className={`py-3 font-semibold ${item.gap > 20 ? 'text-red-500' : item.gap > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
+              <tr key={item.skill} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors duration-150">
+                <td className="py-3.5 px-2 font-bold text-slate-900 dark:text-white">{item.skill}</td>
+                <td className="py-3.5 px-2 text-slate-600 dark:text-slate-300 font-semibold">{item.currentLevel}%</td>
+                <td className="py-3.5 px-2 text-slate-600 dark:text-slate-300 font-semibold">{item.requiredLevel}%</td>
+                <td className={`py-3.5 px-2 font-bold ${item.gap > 20 ? 'text-rose-600 dark:text-rose-400' : item.gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {item.gap > 0 ? `${item.gap}%` : 'None'}
                 </td>
               </tr>

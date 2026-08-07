@@ -32,7 +32,18 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, access, refresh) => {
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
-    setUser(userData);
+    const storedAvatar = localStorage.getItem('userAvatar');
+    setUser(storedAvatar ? { ...userData, avatar: storedAvatar } : userData);
+  };
+
+  const updateUser = (updatedData) => {
+    setUser((prev) => {
+      const newUser = { ...prev, ...updatedData };
+      if (updatedData.avatar) {
+        localStorage.setItem('userAvatar', updatedData.avatar);
+      }
+      return newUser;
+    });
   };
 
   const logout = () => {
@@ -42,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
