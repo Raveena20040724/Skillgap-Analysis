@@ -7,11 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies & Build Output
 node_modules
-**/node_modules/
 dist
-**/dist/
 dist-ssr
 *.local
 
@@ -19,12 +16,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
-backend/.env
-frontend/.env
 
-# Python & Django
+# Python
 __pycache__/
-**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -33,12 +27,12 @@ env/
 venv/
 ENV/
 .venv/
+
+# Database
 *.sqlite3
 *.db
-backend/db.sqlite3
-backend/media/
 
-# Editor & OS files
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
