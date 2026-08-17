@@ -28,12 +28,15 @@ import SettingsPage from '../pages/employee/SettingsPage';
 import HrDashboard from '../pages/hr/HrDashboard';
 import EmployeeDirectory from '../pages/hr/EmployeeDirectory';
 import HrReports from '../pages/hr/HrReports';
+import HrNotifications from '../pages/hr/HrNotifications';
+import HrSettings from '../pages/hr/HrSettings';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import UserManagement from '../pages/admin/UserManagement';
 import RolesAccess from '../pages/admin/RolesAccess';
 import DepartmentsManagement from '../pages/admin/DepartmentsManagement';
 import SystemReports from '../pages/admin/SystemReports';
 import SystemSettings from '../pages/admin/SystemSettings';
+import AdminNotifications from '../pages/admin/AdminNotifications';
 
 const AppRoutes = () => {
   return (
@@ -70,12 +73,15 @@ const AppRoutes = () => {
         <Route path={ROUTES.HR_DASHBOARD} element={<HrDashboard />} />
         <Route path={ROUTES.HR_DIRECTORY} element={<EmployeeDirectory />} />
         <Route path={ROUTES.HR_REPORTS} element={<HrReports />} />
+        <Route path={ROUTES.HR_NOTIFICATIONS} element={<HrNotifications />} />
+        <Route path={ROUTES.HR_SETTINGS} element={<HrSettings />} />
         <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
         <Route path={ROUTES.ADMIN_USERS} element={<UserManagement />} />
         <Route path={ROUTES.ADMIN_ROLES} element={<RolesAccess />} />
         <Route path={ROUTES.ADMIN_DEPARTMENTS} element={<DepartmentsManagement />} />
         <Route path={ROUTES.ADMIN_REPORTS} element={<SystemReports />} />
         <Route path={ROUTES.ADMIN_SETTINGS} element={<SystemSettings />} />
+        <Route path={ROUTES.ADMIN_NOTIFICATIONS} element={<AdminNotifications />} />
       </Route>
 
       {/* Default */}

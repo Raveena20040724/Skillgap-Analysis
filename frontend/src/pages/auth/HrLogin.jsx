@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../constants/routes';
-import { Users, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { Users, Lock, Mail, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 const HrLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -25,6 +26,16 @@ const HrLogin = () => {
       return;
     }
 
+    // Check System Maintenance Mode
+    const isMaintenance = localStorage.getItem('system_maintenance_mode') === 'true';
+    if (isMaintenance) {
+      const lowerEmail = formData.email.trim().toLowerCase();
+      if (!lowerEmail.includes('admin')) {
+        setError('⚠️ System Maintenance Mode is currently active for database upgrades. HR Manager logins are temporarily restricted. Please try again later.');
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -33,10 +44,16 @@ const HrLogin = () => {
         username: formData.email,
         password: formData.password
       });
-      const { access, refresh, user } = response.data;
-      login({ ...user, role: 'hr' }, access, refresh);
-      navigate(ROUTES.HR_DASHBOARD);
-      return;
+      const authData = response.data?.data || response.data;
+      const access = authData?.access;
+      const refresh = authData?.refresh;
+      const user = authData?.user;
+
+      if (user && access) {
+        login({ ...user, role: 'hr' }, access, refresh);
+        navigate(ROUTES.HR_DASHBOARD);
+        return;
+      }
     } catch (err) {
       // API call fallback -> check local stored HR accounts created by Admin
       const localHrs = JSON.parse(localStorage.getItem('custom_hr_users') || '[]');
@@ -65,7 +82,7 @@ const HrLogin = () => {
         login({ ...userObj, role: 'hr' }, mockToken, mockToken);
         navigate(ROUTES.HR_DASHBOARD);
       } else {
-        setError('Invalid HR credentials. Please check your email and password.');
+        setError(err.response?.data?.message || err.response?.data?.detail || 'Invalid HR credentials. Please check your email and password.');
       }
     } finally {
       setLoading(false);
@@ -123,13 +140,19 @@ const HrLogin = () => {
         {/* Right Auth Card */}
         <div className="lg:col-span-5 w-full">
           <div className="bg-white dark:bg-[#161f33] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-purple-950/50 text-slate-900 border border-slate-200/90 dark:border-slate-800 max-w-md w-full mx-auto lg:ml-auto relative">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 mx-auto mb-3 border border-purple-500/20">
                 <Users className="w-7 h-7" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">HR Manager Sign In</h2>
               <p className="text-xs font-bold text-slate-400 mt-1">Enter your assigned HR credentials to sign in</p>
             </div>
+
+            {localStorage.getItem('system_maintenance_mode') === 'true' && (
+              <div className="p-3.5 mb-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold text-center">
+                ⚠️ System Maintenance Mode Active: HR logins restricted during database upgrades.
+              </div>
+            )}
 
             {error && (
               <div className="p-3.5 mb-6 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold text-center">
@@ -156,17 +179,25 @@ const HrLogin = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Password</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <div className="relative flex items-center">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
                   <input
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-12 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

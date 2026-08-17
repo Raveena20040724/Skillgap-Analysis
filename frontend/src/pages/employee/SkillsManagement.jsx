@@ -137,28 +137,56 @@ const SkillsManagement = () => {
 
   useEffect(() => {
     fetchSkills();
+
+    const handleSkillsUpdated = () => {
+      fetchSkills();
+    };
+
+    window.addEventListener('skillsUpdated', handleSkillsUpdated);
+    return () => window.removeEventListener('skillsUpdated', handleSkillsUpdated);
   }, []);
 
   const fetchSkills = async () => {
     try {
-      const response = await skillsService.getSkills();
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        const formatted = response.data.map((sk, index) => ({
-          id: sk.id || `server-${index}`,
-          name: sk.name || sk.skill_name || 'Unnamed Skill',
-          category: sk.category || 'Programming',
-          level: sk.level || sk.proficiency || 'Intermediate',
-          yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
-          proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
-          verified: sk.verified ?? true,
-        }));
-        setSkills(formatted);
-      } else {
-        setSkills(INITIAL_SKILLS);
+      const savedLocal = localStorage.getItem('custom_user_skills');
+      let baseSkills = savedLocal ? JSON.parse(savedLocal) : null;
+
+      if (!baseSkills || baseSkills.length === 0) {
+        const response = await skillsService.getSkills();
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          baseSkills = response.data.map((sk, index) => ({
+            id: sk.id || `server-${index}`,
+            name: sk.name || sk.skill_name || 'Unnamed Skill',
+            category: sk.category || 'Programming',
+            level: sk.level || sk.proficiency || 'Intermediate',
+            yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
+            proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
+            verified: sk.verified ?? true,
+          }));
+        } else {
+          baseSkills = INITIAL_SKILLS;
+        }
       }
+
+      // Check if there are resume extracted skills to merge
+      const resumeSkillsStr = localStorage.getItem('employee_resume_skills');
+      if (resumeSkillsStr) {
+        const resumeSkills = JSON.parse(resumeSkillsStr);
+        const existingNames = new Set(baseSkills.map(s => s.name.toLowerCase().trim()));
+        resumeSkills.forEach(rsk => {
+          if (!existingNames.has(rsk.name.toLowerCase().trim())) {
+            baseSkills.unshift(rsk);
+            existingNames.add(rsk.name.toLowerCase().trim());
+          }
+        });
+      }
+
+      setSkills(baseSkills);
+      localStorage.setItem('custom_user_skills', JSON.stringify(baseSkills));
     } catch (error) {
       console.log('Backend standard API fallback: loading default skill inventory.', error);
-      setSkills(INITIAL_SKILLS);
+      const savedLocal = localStorage.getItem('custom_user_skills');
+      setSkills(savedLocal ? JSON.parse(savedLocal) : INITIAL_SKILLS);
     } finally {
       setLoading(false);
     }
@@ -223,7 +251,10 @@ const SkillsManagement = () => {
     } catch (err) {
       // Handled locally
     }
-    setSkills((prev) => prev.filter((sk) => sk.id !== id));
+    const updated = skills.filter((sk) => sk.id !== id);
+    setSkills(updated);
+    localStorage.setItem('custom_user_skills', JSON.stringify(updated));
+    window.dispatchEvent(new Event('skillsUpdated'));
     showNotification('Skill successfully removed');
   };
 
@@ -240,15 +271,15 @@ const SkillsManagement = () => {
       category: finalCategory,
     };
 
+    let nextSkills = [];
     if (editingSkill) {
       try {
         await skillsService.updateSkill(editingSkill.id, updatedFormData);
       } catch (err) {
         // Handled locally
       }
-      setSkills((prev) =>
-        prev.map((sk) => (sk.id === editingSkill.id ? { ...sk, ...updatedFormData } : sk))
-      );
+      nextSkills = skills.map((sk) => (sk.id === editingSkill.id ? { ...sk, ...updatedFormData } : sk));
+      setSkills(nextSkills);
       showNotification(`Updated "${formData.name}" skill competency`);
     } else {
       const newSkillObj = {
@@ -261,10 +292,13 @@ const SkillsManagement = () => {
       } catch (err) {
         // Handled locally
       }
-      setSkills((prev) => [newSkillObj, ...prev]);
+      nextSkills = [newSkillObj, ...skills];
+      setSkills(nextSkills);
       showNotification(`Added "${formData.name}" under category "${finalCategory}"`);
     }
 
+    localStorage.setItem('custom_user_skills', JSON.stringify(nextSkills));
+    window.dispatchEvent(new Event('skillsUpdated'));
     setIsModalOpen(false);
   };
 
@@ -571,9 +605,16 @@ const SkillsManagement = () => {
                     </span>
                   </div>
 
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-500/20" /> Verified
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {skill.source === 'Resume' && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" /> Resume
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-500/20" /> Verified
+                    </span>
+                  </div>
                 </div>
               </Card>
             );

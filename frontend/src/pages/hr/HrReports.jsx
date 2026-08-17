@@ -34,12 +34,35 @@ const HrReports = () => {
     setTimeout(() => setToastMsg(''), 4500);
   };
 
+  const triggerDownload = (filename, content, mimeType = 'text/plain;charset=utf-8;') => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportPDF = (title) => {
-    showToast(`Downloaded "${title}" telemetry report (JSON format)!`);
+    const reportText = `=====================================================\nHR WORKFORCE READINESS & GAP AUDIT REPORT\n=====================================================\nReport Title: ${title}\nGenerated Date: ${new Date().toLocaleString()}\nAuditor: Human Resources & People Operations\n\n1. EXECUTIVE SUMMARY:\nTotal active personnel in directory: 342 members across 5 departments.\nAverage overall competency index: 86.4%.\n\n2. IDENTIFIED CRITICAL AREAS:\n- Cloud Infrastructure & Kubernetes: High Priority\n- BigQuery / Dataflow Streaming: Medium Priority\n- Advanced React Architecture: Solved (94% readiness)\n\n3. RECOMMENDED ACTIONS:\nEnroll 24 engineering candidates into Google Cloud Architect track.\n=====================================================\n`;
+    triggerDownload(`${title.replace(/[^a-zA-Z0-9]/g, '_')}_Report.txt`, reportText, 'text/plain;charset=utf-8;');
+    showToast(`✅ Downloaded "${title}" audit report file!`);
   };
 
   const handleExportExcel = (title) => {
-    showToast(`Exported "${title}" CSV spreadsheet report!`);
+    const csvContent = [
+      'Employee ID,Name,Department,Current Role,Evaluated Score,Skill Gap,Status',
+      'EMP-01,Alex Morgan,Engineering,Frontend Dev,88%,Kubernetes,Compliant',
+      'EMP-02,David Chen,Engineering,Backend Dev,76%,Cloud Architecture,Action Required',
+      'EMP-03,Sarah Jenkins,HR,People Lead,95%,None,Certified',
+      'EMP-04,Priya Patel,Data,Data Scientist,84%,PyTorch,Compliant',
+      'EMP-05,Michael Scott,Management,Operations,91%,None,Certified'
+    ].join('\n');
+    triggerDownload(`${title.replace(/[^a-zA-Z0-9]/g, '_')}.csv`, csvContent, 'text/csv;charset=utf-8;');
+    showToast(`✅ Exported "${title}" CSV spreadsheet!`);
   };
 
   return (

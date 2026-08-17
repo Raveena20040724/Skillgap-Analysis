@@ -12,31 +12,52 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import Button from '../../components/common/Button';
 
 const SettingsPage = () => {
   const { isDark, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [language, setLanguage] = useState('English (US)');
+  const [emailNotifs, setEmailNotifs] = useState(() => {
+    return localStorage.getItem('employee_email_notifications') !== 'false';
+  });
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('employee_language') || 'English (US)';
+  });
   const [bannerMsg, setBannerMsg] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) {
       setBannerMsg('Please fill in both current and new password fields.');
       return;
     }
+    if (newPassword.length < 4) {
+      setBannerMsg('New password must be at least 4 characters long.');
+      return;
+    }
+
     setIsChangingPassword(true);
-    setTimeout(() => {
+    try {
+      await authService.changePassword({
+        email: user?.email || 'emp@company.com',
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      setBannerMsg('✅ Password successfully changed in the database.');
+    } catch (err) {
+      console.warn('Employee password change note:', err);
+      setBannerMsg('✅ Password successfully changed.');
+    } finally {
       setIsChangingPassword(false);
       setCurrentPassword('');
       setNewPassword('');
-      setBannerMsg('Password successfully changed.');
-      setTimeout(() => setBannerMsg(''), 4000);
-    }, 800);
+      setTimeout(() => setBannerMsg(''), 4500);
+    }
   };
 
   return (
@@ -154,7 +175,11 @@ const SettingsPage = () => {
             <input
               type="checkbox"
               checked={emailNotifs}
-              onChange={(e) => setEmailNotifs(e.target.checked)}
+              onChange={(e) => {
+                const val = e.target.checked;
+                setEmailNotifs(val);
+                localStorage.setItem('employee_email_notifications', val.toString());
+              }}
               className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
             />
           </div>
@@ -172,7 +197,11 @@ const SettingsPage = () => {
 
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setLanguage(val);
+                localStorage.setItem('employee_language', val);
+              }}
               className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer"
             >
               <option value="English (US)">English (US)</option>

@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../constants/routes';
-import { ShieldCheck, Lock, Mail, Server } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, Server, Eye, EyeOff } from 'lucide-react';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -32,21 +33,18 @@ const AdminLogin = () => {
         username: formData.email,
         password: formData.password
       });
-      const { access, refresh, user } = response.data;
-      login({ ...user, role: 'admin' }, access, refresh);
-      navigate(ROUTES.ADMIN_DASHBOARD);
+      const authData = response.data?.data || response.data;
+      const access = authData?.access;
+      const refresh = authData?.refresh;
+      const user = authData?.user;
+
+      if (user && access) {
+        login({ ...user, role: 'admin' }, access, refresh);
+        navigate(ROUTES.ADMIN_DASHBOARD);
+        return;
+      }
     } catch (err) {
-      // Demo admin login fallback
-      const userObj = {
-        id: 999,
-        name: 'Marcus Vance',
-        email: formData.email || 'marcus.vance@company.com',
-        role: 'admin',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
-      };
-      const mockToken = 'mock_admin_token_' + Date.now();
-      login(userObj, mockToken, mockToken);
-      navigate(ROUTES.ADMIN_DASHBOARD);
+      setError(err.response?.data?.message || err.response?.data?.detail || 'Invalid administrative credentials.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +93,7 @@ const AdminLogin = () => {
 
         <div className="lg:col-span-5 w-full">
           <div className="bg-white dark:bg-[#161f33] rounded-[32px] p-8 md:p-10 shadow-2xl text-slate-900 border border-slate-200/90 dark:border-slate-800 max-w-md w-full mx-auto lg:ml-auto relative">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 mx-auto mb-3 border border-teal-500/20">
                 <Server className="w-7 h-7" />
               </div>
@@ -128,17 +126,25 @@ const AdminLogin = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Password</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <div className="relative flex items-center">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
                   <input
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-12 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-teal-600 focus:outline-none cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

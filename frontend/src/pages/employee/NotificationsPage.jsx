@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Bell, 
   CheckCircle2, 
@@ -98,10 +98,27 @@ const CATEGORIES = ['All', 'Unread', 'Skill Gap & AI', 'Courses & Path', 'Assess
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('employee_alerts_list');
+      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    } catch {
+      return INITIAL_NOTIFICATIONS;
+    }
+  });
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [bannerMsg, setBannerMsg] = useState('');
+
+  // Automatically mark all unread notifications as read when opening the Notifications page
+  useEffect(() => {
+    setNotifications((prev) => {
+      const allRead = prev.map((n) => ({ ...n, read: true }));
+      localStorage.setItem('employee_alerts_list', JSON.stringify(allRead));
+      window.dispatchEvent(new Event('notificationsUpdated'));
+      return allRead;
+    });
+  }, []);
 
   const showBanner = (msg) => {
     setBannerMsg(msg);
@@ -109,34 +126,43 @@ const NotificationsPage = () => {
   };
 
   const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const updated = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(updated);
+    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
     showBanner('All notifications marked as read.');
   };
 
   const handleClearAll = () => {
     setNotifications([]);
+    localStorage.setItem('employee_alerts_list', JSON.stringify([]));
+    window.dispatchEvent(new Event('notificationsUpdated'));
     showBanner('Notification inbox cleared.');
   };
 
   const handleToggleRead = (id, e) => {
     e.stopPropagation();
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
-    );
+    const updated = notifications.map((n) => (n.id === id ? { ...n, read: !n.read } : n));
+    setNotifications(updated);
+    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
   };
 
   const handleDelete = (id, e) => {
     e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const updated = notifications.filter((n) => n.id !== id);
+    setNotifications(updated);
+    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
     if (selectedNotification?.id === id) setSelectedNotification(null);
     showBanner('Notification removed.');
   };
 
   const handleNotificationClick = (item) => {
-    // Mark as read when clicked
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, read: true } : n))
-    );
+    const updated = notifications.map((n) => (n.id === item.id ? { ...n, read: true } : n));
+    setNotifications(updated);
+    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
     setSelectedNotification(item);
   };
 

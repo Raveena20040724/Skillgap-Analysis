@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Search, 
@@ -16,6 +16,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import { adminService } from '../../services/adminService';
 
 const INITIAL_HRS = [
   {
@@ -83,6 +84,32 @@ const UserManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedHr, setSelectedHr] = useState(null);
   const [reportModalHr, setReportModalHr] = useState(null);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await adminService.getAllUsers();
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setHrs(res.data.map((u) => ({
+          id: u.id,
+          name: u.username || u.email,
+          role: u.role === 'hr' ? 'HR Operations Manager' : u.role === 'admin' ? 'System Administrator' : 'Employee',
+          department: u.department || 'Engineering',
+          company: 'TechCorp Systems',
+          managedStaff: '50 Employees',
+          companySize: '200+ Staff',
+          status: u.is_active ? 'Active' : 'Suspended',
+          avatar: u.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
+          email: u.email
+        })));
+      }
+    } catch (err) {
+      console.log('Using default HR list.', err);
+    }
+  };
 
   const [newHr, setNewHr] = useState({
     name: '',

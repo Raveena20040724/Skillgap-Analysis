@@ -26,8 +26,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || '';
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Ignore 401 interceptor logic for auth endpoints (login, register, refresh)
+    const isAuthEndpoint = requestUrl.includes('/accounts/login') || requestUrl.includes('/accounts/register');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
 
@@ -36,20 +40,20 @@ api.interceptors.response.use(
           const response = await axios.post(`${BASE_URL}/accounts/login/refresh/`, {
             refresh: refreshToken,
           });
-          const newAccessToken = response.data.access;
-          localStorage.setItem('accessToken', newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
+          const newAccessToken = response.data?.access || response.data?.data?.access;
+          if (newAccessToken) {
+            localStorage.setItem('accessToken', newAccessToken);
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return api(originalRequest);
+          }
         } catch (refreshError) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
-          window.location.href = '/login/employee';
         }
       } else {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        window.location.href = '/login/employee';
       }
     }
 

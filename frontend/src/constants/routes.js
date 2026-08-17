@@ -26,6 +26,8 @@ export const ROUTES = {
   HR_DASHBOARD: '/hr/dashboard',
   HR_DIRECTORY: '/hr/directory',
   HR_REPORTS: '/hr/reports',
+  HR_NOTIFICATIONS: '/hr/notifications',
+  HR_SETTINGS: '/hr/settings',
 
   // Admin
   ADMIN_DASHBOARD: '/admin/dashboard',
@@ -34,4 +36,5 @@ export const ROUTES = {
   ADMIN_DEPARTMENTS: '/admin/departments',
   ADMIN_REPORTS: '/admin/reports',
   ADMIN_SETTINGS: '/admin/settings',
+  ADMIN_NOTIFICATIONS: '/admin/notifications',
 };

@@ -99,10 +99,11 @@ const EmployeeProfile = () => {
   const [profile, setProfile] = useState({
     ...DEFAULT_PROFILE,
     name: user?.name || user?.username || DEFAULT_PROFILE.name,
-    email: user?.email || DEFAULT_PROFILE.email,
+    email: user?.email || localStorage.getItem('userEmail') || DEFAULT_PROFILE.email,
     department: user?.department || localStorage.getItem('userDepartment') || DEFAULT_PROFILE.department,
     designation: user?.designation || localStorage.getItem('userDesignation') || DEFAULT_PROFILE.designation,
     phone: localStorage.getItem('userPhone') || DEFAULT_PROFILE.phone,
+    experienceYears: localStorage.getItem('userExperienceYears') ? Number(localStorage.getItem('userExperienceYears')) : DEFAULT_PROFILE.experienceYears,
     avatar: localStorage.getItem('userAvatar') || user?.avatar || DEFAULT_PROFILE.avatar,
   });
 
@@ -120,15 +121,18 @@ const EmployeeProfile = () => {
         const storedPhone = localStorage.getItem('userPhone');
         const storedDept = localStorage.getItem('userDepartment');
         const storedDesig = localStorage.getItem('userDesignation');
+        const storedEmail = localStorage.getItem('userEmail');
+        const storedExp = localStorage.getItem('userExperienceYears');
 
         const updatedData = {
           ...DEFAULT_PROFILE,
           name: response.data.fullName || response.data.name || user?.name || DEFAULT_PROFILE.name,
-          email: response.data.email || user?.email || DEFAULT_PROFILE.email,
+          email: response.data.email || storedEmail || user?.email || DEFAULT_PROFILE.email,
           phone: response.data.phone || storedPhone || DEFAULT_PROFILE.phone,
           department: response.data.department || storedDept || DEFAULT_PROFILE.department,
           designation: response.data.designation || storedDesig || DEFAULT_PROFILE.designation,
           location: response.data.location || DEFAULT_PROFILE.location,
+          experienceYears: response.data.experienceYears || response.data.experience_years || (storedExp ? Number(storedExp) : DEFAULT_PROFILE.experienceYears),
           bio: response.data.bio || DEFAULT_PROFILE.bio,
           avatar: storedAvatar || response.data.avatar || DEFAULT_PROFILE.avatar,
           linkedin: response.data.linkedin || DEFAULT_PROFILE.linkedin,
@@ -166,14 +170,19 @@ const EmployeeProfile = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await profileService.updateProfile(formData);
+      await profileService.updateProfile({
+        ...formData,
+        experience_years: formData.experienceYears,
+      });
     } catch (err) {
-      // Handled locally
+      console.log('Profile update API fallback:', err);
     }
 
-    localStorage.setItem('userPhone', formData.phone);
-    localStorage.setItem('userDepartment', formData.department);
-    localStorage.setItem('userDesignation', formData.designation);
+    localStorage.setItem('userPhone', formData.phone || '');
+    localStorage.setItem('userDepartment', formData.department || '');
+    localStorage.setItem('userDesignation', formData.designation || '');
+    localStorage.setItem('userEmail', formData.email || '');
+    localStorage.setItem('userExperienceYears', String(formData.experienceYears || 3));
 
     setProfile({ ...formData });
     updateUser({
@@ -185,7 +194,7 @@ const EmployeeProfile = () => {
     });
 
     setIsEditing(false);
-    setMessage('Profile updated successfully!');
+    setMessage('✅ Profile information updated successfully!');
     setTimeout(() => setMessage(''), 3500);
   };
 
@@ -346,6 +355,18 @@ const EmployeeProfile = () => {
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Years of Experience</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={formData.experienceYears}
+                  onChange={(e) => setFormData({ ...formData, experienceYears: Math.max(0, parseInt(e.target.value) || 0) })}
                   className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                 />
               </div>

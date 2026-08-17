@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   Users, 
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
+import { adminService } from '../../services/adminService';
 
 const AUDIT_LOGS = [
   {
@@ -37,9 +38,37 @@ const AUDIT_LOGS = [
 ];
 
 const AdminDashboard = () => {
-  const [systemMaintenance, setSystemMaintenance] = useState(false);
+  const [systemMaintenance, setSystemMaintenance] = useState(() => {
+    return localStorage.getItem('system_maintenance_mode') === 'true';
+  });
   const [toastMsg, setToastMsg] = useState('');
   const [toastType, setToastType] = useState('info');
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 342,
+    activeRoles: 3,
+    totalDepartments: 5,
+    systemHealth: '99.9% Uptime'
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await adminService.getSystemStats();
+      if (res.data) {
+        setAdminStats({
+          totalUsers: res.data.total_users || 342,
+          activeRoles: 3,
+          totalDepartments: res.data.total_departments || 5,
+          systemHealth: res.data.system_health || '99.9% Uptime'
+        });
+      }
+    } catch (err) {
+      console.log('Using default admin stats.', err);
+    }
+  };
 
   const showToast = (msg, type = 'info') => {
     setToastMsg(msg);
@@ -94,10 +123,10 @@ const AdminDashboard = () => {
               Registered Users
             </p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              342
+              {adminStats.totalUsers}
             </p>
             <p className="text-xs font-semibold text-slate-400">
-              340 Active • 2 Pending
+              Active Accounts
             </p>
           </div>
 
@@ -113,7 +142,7 @@ const AdminDashboard = () => {
               Active Roles
             </p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              3
+              {adminStats.activeRoles}
             </p>
             <p className="text-xs font-semibold text-slate-400">
               Employee, HR, Admin
@@ -132,7 +161,7 @@ const AdminDashboard = () => {
               Departments
             </p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              5
+              {adminStats.totalDepartments}
             </p>
             <p className="text-xs font-semibold text-slate-400">
               Configured benchmarks
@@ -151,7 +180,7 @@ const AdminDashboard = () => {
               API Uptime
             </p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              99.9%
+              {adminStats.systemHealth}
             </p>
             <p className="text-xs font-semibold text-slate-400">
               Healthy REST API
@@ -211,7 +240,12 @@ const AdminDashboard = () => {
                 onChange={() => {
                   const nextState = !systemMaintenance;
                   setSystemMaintenance(nextState);
-                  showToast(`System Maintenance Mode ${nextState ? 'ENABLED' : 'DISABLED'}`, nextState ? 'warning' : 'info');
+                  localStorage.setItem('system_maintenance_mode', nextState.toString());
+                  window.dispatchEvent(new Event('maintenanceModeChanged'));
+                  showToast(
+                    `System Maintenance Mode ${nextState ? 'ENABLED (User logins restricted)' : 'DISABLED (Normal operations)'}`,
+                    nextState ? 'warning' : 'info'
+                  );
                 }}
                 className="w-4 h-4 text-blue-600 rounded-md cursor-pointer accent-blue-600"
               />

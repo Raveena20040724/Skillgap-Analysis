@@ -54,13 +54,61 @@ const SystemReports = () => {
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadedMsg, setDownloadedMsg] = useState('');
 
+  const triggerDownload = (filename, content, mimeType = 'text/plain;charset=utf-8;') => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownload = (report) => {
     setDownloadingId(report.id);
     setTimeout(() => {
       setDownloadingId(null);
-      setDownloadedMsg(`Successfully downloaded ${report.title} (${report.format})`);
+
+      if (report.id === 1) {
+        // CSV Skill Readiness Report
+        const csvRows = [
+          'Employee ID,Full Name,Email,Department,Designation,Skill Score,Identified Gaps,Readiness Status',
+          'EMP-101,Alex Morgan,alex.morgan@company.com,Engineering,Frontend Developer,88%,Kubernetes/GraphQL,Ready',
+          'EMP-102,Marcus Vance,admin@company.com,Operations,System Administrator,96%,None,Certified',
+          'EMP-103,Sarah Jenkins,sarah.jenkins@company.com,HR,People Lead,92%,BigQuery Analytics,Certified',
+          'EMP-104,David Kim,david.kim@company.com,Engineering,Backend Engineer,74%,Microservices/Docker,In Training',
+          'EMP-105,Elena Rostova,elena.rostova@company.com,Design,Product Designer,85%,Figma Design Systems,Ready'
+        ].join('\n');
+        triggerDownload('Organization_Skill_Readiness_Report.csv', csvRows, 'text/csv;charset=utf-8;');
+      } else if (report.id === 2) {
+        // JSON Security Telemetry Log
+        const securityLogs = {
+          auditVersion: '2.4.0',
+          generatedAt: new Date().toISOString(),
+          systemStatus: 'COMPLIANT_SECURE',
+          activeRBACRoles: ['admin', 'hr', 'employee'],
+          events: [
+            { timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'admin@company.com', action: 'LOGIN_SUCCESS', ip: '192.168.1.45', mfa: 'PASSED' },
+            { timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'sarah.jenkins@company.com', action: 'ASSESSMENT_BENCHMARK_UPDATE', target: 'Engineering' },
+            { timestamp: new Date(Date.now() - 10800000).toISOString(), user: 'alex.morgan@company.com', action: 'RESUME_PARSED', extractedSkills: 8 }
+          ]
+        };
+        triggerDownload('Security_Access_Telemetry_Audit.json', JSON.stringify(securityLogs, null, 2), 'application/json;charset=utf-8;');
+      } else if (report.id === 3) {
+        // AI Model Token Telemetry
+        const textReport = `=====================================================\nSKILLBRIDGE AI MODEL INFERENCE TOKEN TELEMETRY REPORT\n=====================================================\nGenerated: ${new Date().toLocaleString()}\nTarget Model: Google Gemini 3.5 Flash & Grok AI Engine\n\n1. TOTAL INFERENCE CALLS: 1,482 calls\n2. AVERAGE LATENCY: 240ms\n3. TOTAL PROMPT TOKENS: 412,890 tokens\n4. TOTAL COMPLETION TOKENS: 198,450 tokens\n5. ERROR RATE: 0.02% (Healthy REST Endpoints)\n\nSTATUS: Active & Operational\n=====================================================\n`;
+        triggerDownload('AI_Model_Token_Telemetry_Report.txt', textReport, 'text/plain;charset=utf-8;');
+      } else {
+        // HR Analytics
+        const hrReport = `=====================================================\nDEPARTMENT SKILL GAP & COURSE FULFILLMENT REPORT\n=====================================================\nGenerated: ${new Date().toLocaleString()}\nTotal Assessed Employees: 342\nTotal Departments: 5\n\n1. Engineering: 82% Avg Readiness (Top Gap: Kubernetes)\n2. Product Management: 88% Avg Readiness (Top Gap: SQL Analytics)\n3. Human Resources: 94% Avg Readiness (Top Gap: None)\n4. Quality Assurance: 79% Avg Readiness (Top Gap: Cypress E2E)\n5. Design & UX: 90% Avg Readiness (Top Gap: Design Tokens)\n=====================================================\n`;
+        triggerDownload('Department_Skill_Gap_Course_Fulfillment.txt', hrReport, 'text/plain;charset=utf-8;');
+      }
+
+      setDownloadedMsg(`✅ Successfully downloaded ${report.title} (${report.format})`);
       setTimeout(() => setDownloadedMsg(''), 4000);
-    }, 1000);
+    }, 600);
   };
 
   return (

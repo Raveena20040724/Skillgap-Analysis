@@ -57,8 +57,24 @@ const INITIAL_PERMISSIONS = [
 ];
 
 const RolesAccess = () => {
-  const [roles, setRoles] = useState(INITIAL_ROLES);
-  const [permissions, setPermissions] = useState(INITIAL_PERMISSIONS);
+  const [roles, setRoles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_roles_list');
+      return saved ? JSON.parse(saved) : INITIAL_ROLES;
+    } catch {
+      return INITIAL_ROLES;
+    }
+  });
+
+  const [permissions, setPermissions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_permissions_matrix');
+      return saved ? JSON.parse(saved) : INITIAL_PERMISSIONS;
+    } catch {
+      return INITIAL_PERMISSIONS;
+    }
+  });
+
   const [selectedRole, setSelectedRole] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
@@ -70,32 +86,63 @@ const RolesAccess = () => {
   };
 
   const handleTogglePermission = (permId, roleKey) => {
-    setPermissions(permissions.map((p) => {
+    const updatedPermissions = permissions.map((p) => {
       if (p.id === permId) {
         const nextState = !p[roleKey];
         showToast(`Permission "${p.scope}" ${nextState ? 'GRANTED to' : 'REVOKED from'} ${roleKey.toUpperCase()}`);
         return { ...p, [roleKey]: nextState };
       }
       return p;
-    }));
+    });
+
+    setPermissions(updatedPermissions);
+    localStorage.setItem('custom_permissions_matrix', JSON.stringify(updatedPermissions));
+
+    // Recalculate coverage for the role
+    const totalScopes = updatedPermissions.length;
+    const grantedScopes = updatedPermissions.filter(p => !!p[roleKey]).length;
+    const newCoverage = totalScopes > 0 ? Math.round((grantedScopes / totalScopes) * 100) : 0;
+
+    const updatedRoles = roles.map(r => {
+      if (r.id === roleKey) {
+        return { ...r, coverage: newCoverage };
+      }
+      return r;
+    });
+    setRoles(updatedRoles);
+    localStorage.setItem('custom_roles_list', JSON.stringify(updatedRoles));
   };
 
   const handleCreateRoleSubmit = (e) => {
     e.preventDefault();
     if (!newRole.name) return;
+
+    const roleId = `role_${Date.now()}`;
     const created = {
-      id: `role_${Date.now()}`,
+      id: roleId,
       name: newRole.name,
-      badge: newRole.badge.toUpperCase(),
+      badge: (newRole.badge || 'CUSTOM ROLE').toUpperCase(),
       color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
       usersCount: 0,
-      coverage: 40,
+      coverage: 43,
       description: newRole.description || 'Custom organization role with tailored permission scopes.'
     };
-    setRoles([...roles, created]);
+
+    const updatedRoles = [...roles, created];
+    setRoles(updatedRoles);
+    localStorage.setItem('custom_roles_list', JSON.stringify(updatedRoles));
+
+    // Initialize default permissions for new custom role (e.g. basic permissions enabled)
+    const updatedPermissions = permissions.map((p, idx) => ({
+      ...p,
+      [roleId]: idx < 3 // first 3 permissions enabled by default
+    }));
+    setPermissions(updatedPermissions);
+    localStorage.setItem('custom_permissions_matrix', JSON.stringify(updatedPermissions));
+
     setNewRole({ name: '', badge: 'CUSTOM ROLE', description: '' });
     setIsCreateRoleOpen(false);
-    showToast(`Role "${newRole.name}" successfully created!`);
+    showToast(`Custom role "${created.name}" successfully created with active RBAC matrix!`);
   };
 
   return (
@@ -243,10 +290,13 @@ const RolesAccess = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-black uppercase tracking-wider text-slate-400">
-                <th className="p-4 pl-4">Permission Scope</th>
-                <th className="p-4 text-center">System Admin</th>
-                <th className="p-4 text-center">HR Manager</th>
-                <th className="p-4 text-center">Employee</th>
+                <th className="p-4 pl-4 min-w-[240px]">Permission Scope</th>
+                {roles.map((r) => (
+                  <th key={r.id} className="p-4 text-center min-w-[120px]">
+                    <div className="font-bold">{r.name}</div>
+                    <span className="text-[9px] font-mono text-slate-400 lowercase">({r.badge})</span>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
@@ -255,54 +305,28 @@ const RolesAccess = () => {
                   <td className="p-4 pl-4 font-bold text-slate-900 dark:text-white">
                     {perm.scope}
                   </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => handleTogglePermission(perm.id, 'admin')}
-                      className="cursor-pointer transition-transform hover:scale-110 focus:outline-none"
-                    >
-                      {perm.admin ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                          <X className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      )}
-                    </button>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => handleTogglePermission(perm.id, 'hr')}
-                      className="cursor-pointer transition-transform hover:scale-110 focus:outline-none"
-                    >
-                      {perm.hr ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                          <X className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      )}
-                    </button>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => handleTogglePermission(perm.id, 'employee')}
-                      className="cursor-pointer transition-transform hover:scale-110 focus:outline-none"
-                    >
-                      {perm.employee ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                          <X className="w-4 h-4 stroke-[3]" />
-                        </span>
-                      )}
-                    </button>
-                  </td>
+                  {roles.map((r) => {
+                    const isGranted = !!perm[r.id];
+                    return (
+                      <td key={r.id} className="p-4 text-center">
+                        <button
+                          onClick={() => handleTogglePermission(perm.id, r.id)}
+                          className="cursor-pointer transition-transform hover:scale-110 focus:outline-none"
+                          title={`Toggle ${perm.scope} for ${r.name}`}
+                        >
+                          {isGranted ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
+                              <Check className="w-4 h-4 stroke-[3]" />
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                              <X className="w-4 h-4 stroke-[3]" />
+                            </span>
+                          )}
+                        </button>
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -331,21 +355,22 @@ const RolesAccess = () => {
             <div className="space-y-4 text-xs font-semibold">
               <p className="text-slate-500 leading-relaxed">{selectedRole.description}</p>
 
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 <h4 className="font-extrabold uppercase text-slate-400 tracking-wider text-[11px]">Enabled Scopes</h4>
                 {permissions.map((p) => {
-                  const key = selectedRole.id === 'admin' ? 'admin' : selectedRole.id === 'hr' ? 'hr' : 'employee';
-                  const isEnabled = p[key];
+                  const key = selectedRole.id;
+                  const isEnabled = !!p[key];
                   return (
-                    <div key={p.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between">
+                    <div key={p.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between gap-3">
                       <span className="text-slate-800 dark:text-slate-200">{p.scope}</span>
                       <button
                         type="button"
                         onClick={() => handleTogglePermission(p.id, key)}
-                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase cursor-pointer ${isEnabled
+                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase cursor-pointer transition-colors ${
+                          isEnabled
                             ? 'bg-emerald-500/20 text-emerald-500'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
-                          }`}
+                        }`}
                       >
                         {isEnabled ? 'Enabled' : 'Disabled'}
                       </button>

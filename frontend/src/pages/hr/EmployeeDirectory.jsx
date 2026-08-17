@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Search, 
@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Download
 } from 'lucide-react';
+import { hrService } from '../../services/hrService';
 
 const INITIAL_DIRECTORY_EMPLOYEES = [
   {
@@ -83,6 +84,38 @@ const EmployeeDirectory = () => {
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
+  useEffect(() => {
+    fetchDirectory();
+  }, [selectedDept, search]);
+
+  const fetchDirectory = async () => {
+    try {
+      const res = await hrService.getEmployees({
+        department: selectedDept !== 'All' ? selectedDept : undefined,
+        search: search.trim() || undefined,
+      });
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setDirectoryEmployees(res.data.map((emp) => ({
+          id: emp.id,
+          name: emp.name || emp.username,
+          designation: emp.designation || 'Software Engineer',
+          department: emp.department || 'Engineering',
+          skillReadinessScore: emp.readiness_score || 85,
+          experienceYears: emp.experience_years || 3,
+          status: 'Active',
+          email: emp.email,
+          location: emp.location || 'San Francisco, CA',
+          bio: emp.bio || 'Engineered high quality software products.',
+          avatar: emp.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
+        })));
+      } else if (!search && selectedDept === 'All') {
+        setDirectoryEmployees(INITIAL_DIRECTORY_EMPLOYEES);
+      }
+    } catch (err) {
+      console.log('Using default employee directory list.', err);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
