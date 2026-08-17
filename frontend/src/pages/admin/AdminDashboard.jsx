@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   Users, 
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
+import { adminService } from '../../services/adminService';
 
 const AUDIT_LOGS = [
   {
@@ -37,9 +38,37 @@ const AUDIT_LOGS = [
 ];
 
 const AdminDashboard = () => {
-  const [systemMaintenance, setSystemMaintenance] = useState(false);
+  const [systemMaintenance, setSystemMaintenance] = useState(() => {
+    return localStorage.getItem('system_maintenance_mode') === 'true';
+  });
   const [toastMsg, setToastMsg] = useState('');
   const [toastType, setToastType] = useState('info');
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 342,
+    activeRoles: 3,
+    totalDepartments: 5,
+    systemHealth: '99.9% Uptime'
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await adminService.getSystemStats();
+      if (res.data) {
+        setAdminStats({
+          totalUsers: res.data.total_users || 342,
+          activeRoles: 3,
+          totalDepartments: res.data.total_departments || 5,
+          systemHealth: res.data.system_health || '99.9% Uptime'
+        });
+      }
+    } catch (err) {
+      console.log('Using default admin stats.', err);
+    }
+  };
 
   const showToast = (msg, type = 'info') => {
     setToastMsg(msg);
@@ -86,80 +115,80 @@ const AdminDashboard = () => {
       </div>
 
       {/* 4 Stat Summary Cards (Exact Skill Gap Values) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Registered Users */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
-          <div className="space-y-1 min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               Registered Users
             </p>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              342
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {adminStats.totalUsers}
             </p>
-            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
-              340 Active • 2 Pending
+            <p className="text-xs font-semibold text-slate-400">
+              Active Accounts
             </p>
           </div>
 
-          <div className="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <Users className="w-5 h-5 text-blue-500" />
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-blue-500" />
           </div>
         </div>
 
         {/* Card 2: Active Roles */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
-          <div className="space-y-1 min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               Active Roles
             </p>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              3
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {adminStats.activeRoles}
             </p>
-            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
+            <p className="text-xs font-semibold text-slate-400">
               Employee, HR, Admin
             </p>
           </div>
 
-          <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-            <Key className="w-5 h-5 text-indigo-500" />
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <Key className="w-6 h-6 text-indigo-500" />
           </div>
         </div>
 
         {/* Card 3: Departments */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
-          <div className="space-y-1 min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               Departments
             </p>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              5
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {adminStats.totalDepartments}
             </p>
-            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
+            <p className="text-xs font-semibold text-slate-400">
               Configured benchmarks
             </p>
           </div>
 
-          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5 text-emerald-500" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Building2 className="w-6 h-6 text-emerald-500" />
           </div>
         </div>
 
         {/* Card 4: API Uptime */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
-          <div className="space-y-1 min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
+        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               API Uptime
             </p>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              99.9%
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {adminStats.systemHealth}
             </p>
-            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
+            <p className="text-xs font-semibold text-slate-400">
               Healthy REST API
             </p>
           </div>
 
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Server className="w-5 h-5 text-purple-500" />
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Server className="w-6 h-6 text-purple-500" />
           </div>
         </div>
       </div>
@@ -211,7 +240,12 @@ const AdminDashboard = () => {
                 onChange={() => {
                   const nextState = !systemMaintenance;
                   setSystemMaintenance(nextState);
-                  showToast(`System Maintenance Mode ${nextState ? 'ENABLED' : 'DISABLED'}`, nextState ? 'warning' : 'info');
+                  localStorage.setItem('system_maintenance_mode', nextState.toString());
+                  window.dispatchEvent(new Event('maintenanceModeChanged'));
+                  showToast(
+                    `System Maintenance Mode ${nextState ? 'ENABLED (User logins restricted)' : 'DISABLED (Normal operations)'}`,
+                    nextState ? 'warning' : 'info'
+                  );
                 }}
                 className="w-4 h-4 text-blue-600 rounded-md cursor-pointer accent-blue-600"
               />

@@ -32,10 +32,7 @@ import {
   ShieldCheck, 
   Building2, 
   PieChart, 
-  Sliders,
-  Menu,
-  X,
-  ChevronRight
+  Sliders 
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -44,22 +41,18 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [portalDropdownOpen, setPortalDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
-  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
 
   const dropdownRef = useRef(null);
   const portalRef = useRef(null);
   const notifRef = useRef(null);
-  const searchRef = useRef(null);
 
-  // Active workspace mode detection (strictly respects user role and URL)
-  const userRole = user?.role || localStorage.getItem('user_role') || (user?.username === 'admin' ? 'admin' : user?.username?.includes('hr') ? 'hr' : 'employee');
-  const isAdmin = userRole === 'admin';
-  const isHr = !isAdmin && userRole === 'hr';
+  // Active workspace mode detection
+  const isAdmin = location.pathname.startsWith('/admin');
+  const isHr = location.pathname.startsWith('/hr');
 
   const workspaceName = isAdmin 
     ? 'Admin Workspace' 
@@ -73,66 +66,35 @@ const DashboardLayout = () => {
     ? 'Hr Portal' 
     : 'Employee Portal';
 
-  // Prevent cross-portal routing leakage
-  useEffect(() => {
-    if (isAdmin && (location.pathname.startsWith('/employee') || location.pathname === '/dashboard')) {
-      navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
-    } else if (isHr && (location.pathname.startsWith('/employee') || location.pathname === '/dashboard')) {
-      navigate(ROUTES.HR_DASHBOARD, { replace: true });
-    }
-  }, [isAdmin, isHr, location.pathname]);
+  const notificationsPath = isAdmin 
+    ? ROUTES.ADMIN_NOTIFICATIONS 
+    : isHr 
+    ? ROUTES.HR_NOTIFICATIONS 
+    : ROUTES.NOTIFICATIONS;
 
-  // Search Index for Global Navbar Search
-  const searchIndex = isAdmin ? [
-    { title: 'Admin Dashboard', subtitle: 'Overview of system telemetry, users, and AI metrics', path: ROUTES.ADMIN_DASHBOARD, category: 'Dashboard' },
-    { title: 'Admin Profile', subtitle: 'Update profile info, photo avatar, and credentials', path: ROUTES.ADMIN_PROFILE, category: 'Account' },
-    { title: 'User Management', subtitle: 'Manage HR managers and employee directory accounts', path: ROUTES.ADMIN_USERS, category: 'Management' },
-    { title: 'Roles & Access (RBAC)', subtitle: 'Manage permissions, custom roles, and security scopes', path: ROUTES.ADMIN_ROLES, category: 'Security' },
-    { title: 'Department Taxonomies', subtitle: 'Configure departments and readiness benchmarks', path: ROUTES.ADMIN_DEPARTMENTS, category: 'Organization' },
-    { title: 'System Reports & Telemetry', subtitle: 'Download audit logs, CSV exports, and AI metrics', path: ROUTES.ADMIN_REPORTS, category: 'Analytics' },
-    { title: 'System Settings', subtitle: 'Change password with email OTP, theme, and security', path: ROUTES.ADMIN_SETTINGS, category: 'Settings' },
-    { title: 'Notifications Center', subtitle: 'View system audit alerts and security logs', path: ROUTES.ADMIN_NOTIFICATIONS, category: 'Alerts' },
-  ] : isHr ? [
-    { title: 'HR Dashboard', subtitle: 'Organization skill gap overview and readiness index', path: ROUTES.HR_DASHBOARD, category: 'Dashboard' },
-    { title: 'Employee Directory', subtitle: 'Browse staff profiles, skills, and departments', path: ROUTES.HR_DIRECTORY, category: 'Directory' },
-    { title: 'Skill Reports & Analytics', subtitle: 'Export team skill audits and CSV spreadsheets', path: ROUTES.HR_REPORTS, category: 'Reports' },
-    { title: 'Notifications Center', subtitle: 'Talent assessments and readiness reports', path: ROUTES.HR_NOTIFICATIONS, category: 'Alerts' },
-    { title: 'HR Settings', subtitle: 'Notification preferences and account security', path: ROUTES.HR_SETTINGS, category: 'Settings' },
-  ] : [
-    { title: 'Employee Dashboard', subtitle: 'Career progress, skill overview, and active roadmaps', path: ROUTES.EMPLOYEE_DASHBOARD, category: 'Dashboard' },
-    { title: 'My Profile', subtitle: 'Personal details, bio, and technical background', path: ROUTES.EMPLOYEE_PROFILE, category: 'Profile' },
-    { title: 'Resume Upload & Telemetry', subtitle: 'Parse resume to extract technical skills automatically', path: ROUTES.RESUME_UPLOAD, category: 'Resume' },
-    { title: 'Skills Management', subtitle: 'Add, verify, and track technical competencies', path: ROUTES.SKILLS_MANAGEMENT, category: 'Skills' },
-    { title: 'Skill Assessments', subtitle: 'Take quizzes to benchmark your proficiency levels', path: ROUTES.SKILL_ASSESSMENT, category: 'Assessments' },
-    { title: 'Skill Gap Analysis', subtitle: 'Discover gaps for target career roles', path: ROUTES.SKILL_GAP_RESULTS, category: 'AI Insights' },
-    { title: 'Career Paths & Recommendations', subtitle: 'Personalized career advancement roadmaps', path: ROUTES.CAREER_RECOMMENDATIONS, category: 'Careers' },
-    { title: 'Learning Pathway Roadmap', subtitle: 'Step-by-step master roadmap for your goals', path: ROUTES.LEARNING_PATH, category: 'Roadmap' },
-    { title: 'Course Recommendations', subtitle: 'Tailored courses to close identified skill gaps', path: ROUTES.COURSE_RECOMMENDATIONS, category: 'Courses' },
-    { title: 'Progress Tracking', subtitle: 'Milestones, completion rates, and learning stats', path: ROUTES.PROGRESS_TRACKING, category: 'Analytics' },
-    { title: 'Notifications Center', subtitle: 'Real-time AI insights, course updates, and alerts', path: ROUTES.NOTIFICATIONS, category: 'Alerts' },
-    { title: 'Account Settings', subtitle: 'Preferences, notifications, and security', path: ROUTES.SETTINGS, category: 'Settings' },
-  ];
+  const settingsPath = isAdmin 
+    ? ROUTES.ADMIN_SETTINGS 
+    : isHr 
+    ? ROUTES.HR_SETTINGS 
+    : ROUTES.SETTINGS;
 
-  const searchResults = globalSearch.trim() === '' 
-    ? [] 
-    : searchIndex.filter(item => 
-        item.title.toLowerCase().includes(globalSearch.toLowerCase()) || 
-        item.subtitle.toLowerCase().includes(globalSearch.toLowerCase()) ||
-        item.category.toLowerCase().includes(globalSearch.toLowerCase())
-      );
+  const profilePath = isAdmin 
+    ? ROUTES.ADMIN_DASHBOARD 
+    : isHr 
+    ? ROUTES.HR_DIRECTORY 
+    : ROUTES.EMPLOYEE_PROFILE;
 
   // Dynamic Navigation Items matching user photo
   const getNavItems = () => {
     if (isAdmin) {
       return [
         { label: 'Admin Dashboard', path: ROUTES.ADMIN_DASHBOARD, icon: LayoutGrid, isLucide: true },
-        { label: 'Admin Profile', path: ROUTES.ADMIN_PROFILE, icon: PersonFill },
         { label: 'User Management', path: ROUTES.ADMIN_USERS, icon: Users, isLucide: true },
         { label: 'Roles & Access', path: ROUTES.ADMIN_ROLES, icon: ShieldCheck, isLucide: true },
         { label: 'Departments', path: ROUTES.ADMIN_DEPARTMENTS, icon: Building2, isLucide: true },
         { label: 'System Reports', path: ROUTES.ADMIN_REPORTS, icon: PieChart, isLucide: true },
         { label: 'System Settings', path: ROUTES.ADMIN_SETTINGS, icon: Sliders, isLucide: true },
-        { label: 'Notifications', path: ROUTES.ADMIN_NOTIFICATIONS, icon: BellFill },
+        { label: 'System Alerts', path: ROUTES.ADMIN_NOTIFICATIONS, icon: BellFill },
       ];
     }
 
@@ -163,82 +125,119 @@ const DashboardLayout = () => {
 
   const navItems = getNavItems();
 
-  // Role-specific notifications data
-  const initialNotifications = isAdmin
-    ? [
+  // Initial Notifications State tailored by role
+  const getInitialNotifications = () => {
+    if (isAdmin) {
+      return [
         {
           id: 1,
-          title: 'System Security Audit Clean',
-          message: 'Zero vulnerability anomalies detected in RBAC permission tables.',
-          time: '5m ago',
-          read: false,
-        },
-        {
-          id: 2,
-          title: 'New HR Manager Added',
-          message: 'Sarah Jenkins registered under People Operations department.',
-          time: '1h ago',
-          read: false,
-        },
-        {
-          id: 3,
-          title: 'Gemini AI Endpoint Status: Active',
-          message: 'AI inference latency is within optimal range (142ms).',
-          time: '3h ago',
-          read: false,
-        },
-      ]
-    : isHr
-    ? [
-        {
-          id: 1,
-          title: 'New Assessment Submissions (12)',
-          message: 'Engineering department submitted Q3 Skill Gap assessments.',
-          time: '15m ago',
-          read: false,
-        },
-        {
-          id: 2,
-          title: 'Talent Readiness Report Ready',
-          message: 'Organization average skill readiness indexed at 83.4%.',
-          time: '2h ago',
-          read: false,
-        },
-        {
-          id: 3,
-          title: 'New Employee Profile Created',
-          message: 'Alex Morgan joined Senior Frontend pathway.',
-          time: '4h ago',
-          read: false,
-        },
-      ]
-    : [
-        {
-          id: 1,
-          title: 'AI Skill Gap Analysis Ready',
-          message: 'Your latest skill assessment has been processed. 4 skill gaps identified for Senior Frontend role.',
+          title: 'PostgreSQL Database Synced',
+          message: 'Database "skillgap_app_db" verified online with zero latency.',
           time: '10m ago',
           read: false,
         },
         {
           id: 2,
-          title: 'New Recommended Course',
-          message: 'Advanced React Design Systems course added to your learning pathway.',
+          title: 'HR Manager Account Provisioned',
+          message: 'Sarah Jenkins created with full HR Directory & Reports access.',
+          time: '45m ago',
+          read: false,
+        },
+        {
+          id: 3,
+          title: 'Security Audit: Role Modified',
+          message: 'Global permission matrix for Role "HR Manager" modified.',
+          time: '2h ago',
+          read: false,
+        },
+      ];
+    }
+    if (isHr) {
+      return [
+        {
+          id: 1,
+          title: 'Employee Assessment Completed',
+          message: 'Alex Morgan scored 94% on Advanced React Architecture.',
+          time: '15m ago',
+          read: false,
+        },
+        {
+          id: 2,
+          title: 'Department Skill Gap Alert',
+          message: 'Engineering department has 38% critical gap in Cloud architecture.',
           time: '1h ago',
           read: false,
         },
         {
           id: 3,
-          title: 'Resume Successfully Parsed',
-          message: 'CV telemetry updated. 8 technical skills extracted and synced with profile.',
-          time: '2h ago',
+          title: 'New Resume Synced',
+          message: 'Marcus Chen added to directory with 8 extracted technical skills.',
+          time: '3h ago',
           read: false,
         },
       ];
+    }
+    return [
+      {
+        id: 1,
+        title: 'AI Skill Gap Analysis Ready',
+        message: 'Your latest skill assessment has been processed. 4 skill gaps identified for Senior Frontend role.',
+        time: '10m ago',
+        read: false,
+      },
+      {
+        id: 2,
+        title: 'New Recommended Course',
+        message: 'Advanced React Design Systems course added to your learning pathway.',
+        time: '1h ago',
+        read: false,
+      },
+      {
+        id: 3,
+        title: 'Resume Successfully Parsed',
+        message: 'CV telemetry updated. 8 technical skills extracted and synced with profile.',
+        time: '2h ago',
+        read: false,
+      },
+    ];
+  };
 
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const notifStorageKey = isAdmin 
+    ? 'admin_alerts_list' 
+    : isHr 
+    ? 'hr_alerts_list' 
+    : 'employee_alerts_list';
+
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem(notifStorageKey);
+      return saved ? JSON.parse(saved) : getInitialNotifications();
+    } catch {
+      return getInitialNotifications();
+    }
+  });
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Sync notifications on route change or event
+  useEffect(() => {
+    const syncNotifs = () => {
+      try {
+        const saved = localStorage.getItem(notifStorageKey);
+        if (saved) {
+          setNotifications(JSON.parse(saved));
+        } else {
+          setNotifications(getInitialNotifications());
+        }
+      } catch {
+        setNotifications(getInitialNotifications());
+      }
+    };
+
+    syncNotifs();
+    window.addEventListener('notificationsUpdated', syncNotifs);
+    return () => window.removeEventListener('notificationsUpdated', syncNotifs);
+  }, [location.pathname, notifStorageKey]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -252,94 +251,50 @@ const DashboardLayout = () => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setNotifOpen(false);
       }
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setSearchDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
-
   const handleLogout = () => {
     setDropdownOpen(false);
-    setMobileMenuOpen(false);
     logout();
-    navigate(isAdmin ? ROUTES.ADMIN_LOGIN : isHr ? ROUTES.HR_LOGIN : ROUTES.EMPLOYEE_LOGIN);
+    navigate(ROUTES.EMPLOYEE_LOGIN);
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+    localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
   };
 
-  const markAllAsUnread = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: false })));
-  };
-
-  // Clicking the notification bell icon clears unread badge and opens dropdown
-  const handleBellClick = () => {
-    const nextState = !notifOpen;
-    setNotifOpen(nextState);
-    if (nextState) {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleToggleNotifBell = () => {
+    const nextOpen = !notifOpen;
+    setNotifOpen(nextOpen);
+    if (nextOpen && unreadCount > 0) {
+      // Touching/opening notification bell marks all unread as read
+      markAllAsRead();
     }
   };
 
-  // Clicking an individual notification marks it read AND navigates to the notifications page
-  const handleNotifMessageClick = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const handleReadNotif = (id) => {
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+    localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    window.dispatchEvent(new Event('notificationsUpdated'));
     setNotifOpen(false);
-    navigate(notifRoute);
+    navigate(notificationsPath);
   };
 
-  const handleNavClick = (item) => {
-    setMobileMenuOpen(false);
-    if (item.label.toLowerCase().includes('notification')) {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    }
-  };
-
-  const notifRoute = isAdmin 
-    ? ROUTES.ADMIN_NOTIFICATIONS 
-    : isHr 
-    ? ROUTES.HR_NOTIFICATIONS 
-    : ROUTES.NOTIFICATIONS;
-
-  const profileRoute = isAdmin 
-    ? ROUTES.ADMIN_PROFILE 
-    : isHr 
-    ? ROUTES.HR_DIRECTORY 
-    : ROUTES.EMPLOYEE_PROFILE;
-
-  const settingsRoute = isAdmin 
-    ? ROUTES.ADMIN_SETTINGS 
-    : isHr 
-    ? ROUTES.HR_SETTINGS 
-    : ROUTES.SETTINGS;
-
-  const initialLetter = (user?.name || user?.username || (isAdmin ? 'Admin' : isHr ? 'HR' : 'Employee')).charAt(0).toUpperCase();
+  const initialLetter = (user?.name || user?.username || 'Employee').charAt(0).toUpperCase();
 
   return (
-    <div className="h-screen w-full overflow-hidden flex bg-slate-100 dark:bg-[#0b1120] text-slate-800 dark:text-slate-100 transition-colors duration-300 relative">
-      {/* Mobile Drawer Backdrop */}
-      {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar - Responsive Drawer on Mobile/Tablet & Persistent on Desktop */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 h-full bg-white dark:bg-[#161f33] border-r border-slate-200 dark:border-slate-800/80 flex flex-col shrink-0 shadow-2xl lg:shadow-none transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 overflow-y-auto ${
-        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+    <div className="h-screen w-screen overflow-hidden flex bg-slate-100 dark:bg-[#0b1120] text-slate-800 dark:text-slate-100 transition-colors duration-300">
+      {/* Sidebar - Fixed full height */}
+      <aside className="w-64 h-full bg-white dark:bg-[#161f33] border-r border-slate-200 dark:border-slate-800/80 flex flex-col shrink-0 shadow-lg dark:shadow-none z-20 overflow-y-auto">
         {/* Brand Header with Exact SkillBridge.AI Logo */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/60 shrink-0 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800/60 shrink-0">
           <div className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 p-0.5 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
@@ -351,18 +306,10 @@ const DashboardLayout = () => {
                 SkillBridge<span className="text-blue-600 dark:text-emerald-400">.AI</span>
               </span>
               <span className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase leading-snug">
-                {workspaceName.toUpperCase()}
+                SKILL GAP & CAREER PLATFORM
               </span>
             </div>
           </div>
-
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Navigation Items */}
@@ -374,7 +321,6 @@ const DashboardLayout = () => {
               <Link
                 key={index}
                 to={item.path}
-                onClick={() => handleNavClick(item)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 group ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
@@ -396,126 +342,44 @@ const DashboardLayout = () => {
       {/* Main content container */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 z-10 bg-slate-100 dark:bg-[#0b1120]">
         {/* Navbar Header */}
-        <header className="h-16 px-4 sm:px-6 lg:px-8 flex justify-between items-center border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900 backdrop-blur-md shrink-0 relative z-30">
-          {/* Left: Mobile Menu Button & Search Bar */}
-          <div className="flex items-center gap-2.5 sm:gap-4">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 lg:hidden hover:bg-slate-100 dark:hover:bg-slate-700/80 cursor-pointer transition-colors"
-              title="Toggle Navigation Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            <div className="relative w-44 sm:w-64 md:w-80 lg:w-96" ref={searchRef}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder={isAdmin ? "Search system logs, users, roles..." : isHr ? "Search employees, skills, reports..." : "Search skills, courses, careers..."}
-                value={globalSearch}
-                onChange={(e) => {
-                  setGlobalSearch(e.target.value);
-                  setSearchDropdownOpen(true);
-                }}
-                onFocus={() => setSearchDropdownOpen(true)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchResults.length > 0) {
-                    navigate(searchResults[0].path);
-                    setGlobalSearch('');
-                    setSearchDropdownOpen(false);
-                  }
-                  if (e.key === 'Escape') {
-                    setSearchDropdownOpen(false);
-                  }
-                }}
-                className="w-full pl-9 pr-8 py-2 text-xs font-semibold bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              />
-              {globalSearch && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGlobalSearch('');
-                    setSearchDropdownOpen(false);
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-
-              {/* Live Search Results Floating Dropdown */}
-              {searchDropdownOpen && globalSearch.trim().length > 0 && (
-                <div className="absolute left-0 mt-2 w-full sm:w-[380px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/80 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
-                  <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase">
-                    <span>Search Results ({searchResults.length})</span>
-                    <span className="text-[10px] lowercase text-slate-400">press enter to open</span>
-                  </div>
-
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50">
-                    {searchResults.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400">
-                        No pages or features found for "<strong className="text-slate-600 dark:text-slate-200">{globalSearch}</strong>"
-                      </div>
-                    ) : (
-                      searchResults.map((res, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => {
-                            navigate(res.path);
-                            setGlobalSearch('');
-                            setSearchDropdownOpen(false);
-                          }}
-                          className="p-3 hover:bg-blue-50/70 dark:hover:bg-slate-700/60 transition-colors cursor-pointer flex items-center justify-between gap-3 group"
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors truncate">
-                                {res.title}
-                              </span>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-teal-400 uppercase">
-                                {res.category}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                              {res.subtitle}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5 shrink-0" />
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+        <header className="h-16 px-8 flex justify-between items-center border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900 backdrop-blur-md shrink-0 relative z-50">
+          {/* Global Search Bar (Center/Left) */}
+          <div className="relative w-80 md:w-96">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder={isAdmin ? "Search system logs, users..." : isHr ? "Search employees, skills..." : "Search skills, courses, careers..."}
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer"
               title="Toggle Theme"
             >
-              {isDark ? <SunFill size={15} /> : <MoonFill size={15} className="text-blue-600" />}
+              {isDark ? <SunFill size={16} /> : <MoonFill size={16} className="text-blue-600" />}
             </button>
 
             {/* Notification Bell Button & Blinking Badge */}
             <div className="relative" ref={notifRef}>
               <button
-                type="button"
-                onClick={handleBellClick}
-                className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer relative"
-                title="Toggle Notifications"
+                onClick={handleToggleNotifBell}
+                className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer relative"
+                title="Notifications"
               >
-                <BellFill size={15} className="text-slate-700 dark:text-slate-200" />
+                <BellFill size={16} className="text-slate-700 dark:text-slate-200" />
 
                 {/* Blinking Red Counter Badge */}
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center">
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-600 text-white text-[9px] font-black items-center justify-center shadow-md">
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-600 text-white text-[10px] font-black items-center justify-center shadow-md">
                       {unreadCount}
                     </span>
                   </span>
@@ -524,57 +388,38 @@ const DashboardLayout = () => {
 
               {/* Notification Dropdown Panel */}
               {notifOpen && (
-                <div className="absolute right-0 mt-3 w-72 sm:w-84 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/80 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/80 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-700/70 flex items-center justify-between">
                     <h3 className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <BellFill size={13} className="text-amber-500" /> Notifications ({unreadCount} unread)
+                      <BellFill size={13} className="text-amber-500" /> Notifications ({unreadCount} new)
                     </h3>
-                    <div className="flex items-center gap-2">
-                      {unreadCount > 0 ? (
-                        <button
-                          type="button"
-                          onClick={markAllAsRead}
-                          className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
-                        >
-                          Mark all read
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={markAllAsUnread}
-                          className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                        >
-                          Mark all unread
-                        </button>
-                      )}
-                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
+                      >
+                        Mark all read
+                      </button>
+                    )}
                   </div>
 
                   <div className="divide-y divide-slate-100 dark:divide-slate-700/60 max-h-72 overflow-y-auto">
                     {notifications.map((n) => (
                       <div
                         key={n.id}
-                        onClick={() => handleNotifMessageClick(n.id)}
-                        className={`p-3 text-xs transition-colors cursor-pointer select-none ${
+                        onClick={() => handleReadNotif(n.id)}
+                        className={`p-3 text-xs transition-colors cursor-pointer ${
                           !n.read 
-                            ? 'bg-blue-50/70 dark:bg-slate-700/50 hover:bg-blue-100/70 dark:hover:bg-slate-700/80' 
+                            ? 'bg-blue-50/60 dark:bg-slate-700/40 hover:bg-blue-100/60 dark:hover:bg-slate-700/70' 
                             : 'hover:bg-slate-50 dark:hover:bg-slate-700/30 opacity-75'
                         }`}
-                        title="Click to view notification"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`font-bold text-slate-900 dark:text-white leading-snug ${!n.read ? 'text-blue-600 dark:text-teal-300' : ''}`}>
-                            {n.title}
-                          </p>
-                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-0.5 ${!n.read ? 'bg-rose-500 ring-2 ring-rose-300/80' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                          <p className="font-bold text-slate-900 dark:text-white leading-snug">{n.title}</p>
+                          {!n.read && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>}
                         </div>
                         <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-normal">{n.message}</p>
-                        <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-slate-100/60 dark:border-slate-700/40">
-                          <span className="text-[10px] text-slate-400 font-semibold">{n.time}</span>
-                          <span className="text-[10px] font-extrabold text-blue-600 dark:text-teal-400 hover:underline">
-                            View details →
-                          </span>
-                        </div>
+                        <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">{n.time}</span>
                       </div>
                     ))}
                   </div>
@@ -582,14 +427,13 @@ const DashboardLayout = () => {
                   {/* View All Notifications Button */}
                   <div className="pt-2 px-3 border-t border-slate-100 dark:border-slate-700/70 text-center">
                     <button
-                      type="button"
                       onClick={() => {
                         setNotifOpen(false);
-                        navigate(notifRoute);
+                        navigate(notificationsPath);
                       }}
                       className="w-full py-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-700/60 rounded-xl transition-colors cursor-pointer"
                     >
-                      View All Notifications ({workspaceName}) →
+                      View All Notifications →
                     </button>
                   </div>
                 </div>
@@ -599,11 +443,10 @@ const DashboardLayout = () => {
             {/* Profile Avatar Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button 
-                type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-4 hover:ring-teal-500/10 transition-all duration-200 cursor-pointer focus:outline-none"
+                className="flex items-center gap-2.5 p-1 rounded-full hover:ring-4 hover:ring-teal-500/10 transition-all duration-200 cursor-pointer focus:outline-none"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-teal-400 p-0.5 shadow-md shadow-teal-500/20">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-teal-400 p-0.5 shadow-md shadow-teal-500/20">
                   {user?.avatar || localStorage.getItem('userAvatar') ? (
                     <img 
                       src={user?.avatar || localStorage.getItem('userAvatar')} 
@@ -616,10 +459,10 @@ const DashboardLayout = () => {
                     </div>
                   )}
                 </div>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden md:inline-block max-w-[120px] truncate">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden md:inline-block">
                   {user?.name || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Alex Morgan')}
                 </span>
-                <ChevronDown size={13} className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 hidden sm:block ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* User Dropdown Menu */}
@@ -632,29 +475,27 @@ const DashboardLayout = () => {
                       {user?.name || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Alex Morgan')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                      {user?.email || (isAdmin ? 'admin@company.com' : isHr ? 'sarah.jenkins@company.com' : 'alex.morgan@company.com')}
+                      {user?.email || (isAdmin ? 'admin@skillbridge.ai' : isHr ? 'hr@skillbridge.ai' : 'employee@skillbridge.ai')}
                     </p>
                   </div>
 
                   {/* Menu Actions */}
                   <div className="py-1">
                     <button
-                      type="button"
                       onClick={() => {
                         setDropdownOpen(false);
-                        navigate(profileRoute);
+                        navigate(profilePath);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer text-left"
                     >
                       <PersonFill size={15} className="text-teal-500" />
-                      {isAdmin ? 'System Settings' : isHr ? 'Employee Directory' : 'Profile'}
+                      Profile
                     </button>
 
                     <button
-                      type="button"
                       onClick={() => {
                         setDropdownOpen(false);
-                        navigate(settingsRoute);
+                        navigate(settingsPath);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer text-left"
                     >
@@ -663,7 +504,6 @@ const DashboardLayout = () => {
                     </button>
 
                     <button
-                      type="button"
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-left"
                     >
@@ -678,7 +518,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto bg-slate-100 dark:bg-[#0b1120]">
+        <main className="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto bg-slate-100 dark:bg-[#0b1120]">
           <Outlet />
         </main>
       </div>
