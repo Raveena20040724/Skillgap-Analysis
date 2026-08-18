@@ -31,6 +31,7 @@ import HrReports from '../pages/hr/HrReports';
 import HrNotifications from '../pages/hr/HrNotifications';
 import HrSettings from '../pages/hr/HrSettings';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminProfile from '../pages/admin/AdminProfile';
 import UserManagement from '../pages/admin/UserManagement';
 import RolesAccess from '../pages/admin/RolesAccess';
 import DepartmentsManagement from '../pages/admin/DepartmentsManagement';
@@ -66,8 +67,15 @@ const AppRoutes = () => {
         <Route path={ROUTES.LEARNING_PATH} element={<LearningPath />} />
         <Route path={ROUTES.COURSE_RECOMMENDATIONS} element={<CourseRecommendations />} />
         <Route path={ROUTES.PROGRESS_TRACKING} element={<ProgressTracking />} />
+        {/* Notification and Settings routes for all roles */}
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path={ROUTES.HR_NOTIFICATIONS} element={<NotificationsPage />} />
+        <Route path={ROUTES.ADMIN_NOTIFICATIONS} element={<NotificationsPage />} />
+        
         <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path={ROUTES.HR_SETTINGS} element={<SettingsPage />} />
 
         {/* HR & Admin routes */}
         <Route path={ROUTES.HR_DASHBOARD} element={<HrDashboard />} />
@@ -76,6 +84,7 @@ const AppRoutes = () => {
         <Route path={ROUTES.HR_NOTIFICATIONS} element={<HrNotifications />} />
         <Route path={ROUTES.HR_SETTINGS} element={<HrSettings />} />
         <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+        <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
         <Route path={ROUTES.ADMIN_USERS} element={<UserManagement />} />
         <Route path={ROUTES.ADMIN_ROLES} element={<RolesAccess />} />
         <Route path={ROUTES.ADMIN_DEPARTMENTS} element={<DepartmentsManagement />} />

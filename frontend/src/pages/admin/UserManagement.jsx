@@ -78,7 +78,31 @@ const CATEGORIES = [
 ];
 
 const UserManagement = () => {
-  const [hrs, setHrs] = useState(INITIAL_HRS);
+  const [hrs, setHrs] = useState(() => {
+    const saved = localStorage.getItem('all_hr_users_list');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    const legacy = localStorage.getItem('custom_hr_users');
+    if (legacy) {
+      try {
+        const parsed = JSON.parse(legacy);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = [...parsed, ...INITIAL_HRS];
+          localStorage.setItem('all_hr_users_list', JSON.stringify(merged));
+          return merged;
+        }
+      } catch (e) {}
+    }
+    localStorage.setItem('all_hr_users_list', JSON.stringify(INITIAL_HRS));
+    return INITIAL_HRS;
+  });
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -142,9 +166,12 @@ const UserManagement = () => {
       avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80'
     };
 
-    setHrs([created, ...hrs]);
+    const updated = [created, ...hrs];
+    setHrs(updated);
 
-    // Save into localStorage so newly created HR can log in at /hr/login!
+    // Save into localStorage so newly created HR is persistent and can log in at /hr/login!
+    localStorage.setItem('all_hr_users_list', JSON.stringify(updated));
+
     const existingCustomHrs = JSON.parse(localStorage.getItem('custom_hr_users') || '[]');
     localStorage.setItem('custom_hr_users', JSON.stringify([created, ...existingCustomHrs]));
 
@@ -164,7 +191,9 @@ const UserManagement = () => {
   const handleUpdateCompanyDetails = (e) => {
     e.preventDefault();
     if (!selectedHr) return;
-    setHrs(hrs.map((h) => h.id === selectedHr.id ? selectedHr : h));
+    const updated = hrs.map((h) => h.id === selectedHr.id ? selectedHr : h);
+    setHrs(updated);
+    localStorage.setItem('all_hr_users_list', JSON.stringify(updated));
     setSelectedHr(null);
   };
 
@@ -230,8 +259,8 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* HR Cards Grid (Matching Photo Layout Exactly) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* HR Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredHrs.map((hr) => (
           <div
             key={hr.id}

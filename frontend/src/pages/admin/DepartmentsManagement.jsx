@@ -7,7 +7,8 @@ import {
   Edit2, 
   CheckCircle2, 
   XCircle,
-  BarChart3
+  BarChart3,
+  Trash2
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 
@@ -20,22 +21,54 @@ const INITIAL_DEPARTMENTS = [
 ];
 
 const DepartmentsManagement = () => {
-  const [departments, setDepartments] = useState(INITIAL_DEPARTMENTS);
+  const [departments, setDepartments] = useState(() => {
+    const saved = localStorage.getItem('custom_departments_list');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    localStorage.setItem('custom_departments_list', JSON.stringify(INITIAL_DEPARTMENTS));
+    return INITIAL_DEPARTMENTS;
+  });
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newDept, setNewDept] = useState({ name: '', code: '', lead: '', targetScore: 85 });
+  const [newDept, setNewDept] = useState({ name: '', code: '', lead: '', targetScore: '' });
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3500);
+  };
 
   const handleAddDepartment = (e) => {
     e.preventDefault();
     if (!newDept.name || !newDept.code) return;
     const item = {
       id: Date.now(),
-      ...newDept,
+      name: newDept.name,
+      code: newDept.code.toUpperCase(),
+      lead: newDept.lead || 'Department Lead',
+      targetScore: Number(newDept.targetScore) || 85,
       employeeCount: 0,
       readinessScore: 75
     };
-    setDepartments([...departments, item]);
-    setNewDept({ name: '', code: '', lead: '', targetScore: 85 });
+    const updated = [...departments, item];
+    setDepartments(updated);
+    localStorage.setItem('custom_departments_list', JSON.stringify(updated));
+    setNewDept({ name: '', code: '', lead: '', targetScore: '' });
     setIsAddModalOpen(false);
+    showToast(`Department "${item.name}" added successfully.`);
+  };
+
+  const handleDeleteDepartment = (id, name) => {
+    const updated = departments.filter((d) => d.id !== id);
+    setDepartments(updated);
+    localStorage.setItem('custom_departments_list', JSON.stringify(updated));
+    showToast(`Department "${name}" removed successfully.`);
   };
 
   return (
@@ -45,7 +78,7 @@ const DepartmentsManagement = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
             <Building2 className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
-            Department Taxonomies & Benchmarks
+            Department Taxonomies & Benchmarks ({departments.length})
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
             Configure organizational departments, target skill readiness benchmarks, and team leads.
@@ -61,46 +94,66 @@ const DepartmentsManagement = () => {
         </button>
       </div>
 
+      {/* Toast Notification Banner */}
+      {toastMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-bold flex items-center gap-2.5 shadow-md animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
       {/* Department Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((dept) => (
           <div
             key={dept.id}
-            className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-5 transition-colors"
+            className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-5 transition-all duration-200 hover:shadow-2xl flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between">
-              <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-black uppercase">
-                {dept.code}
-              </span>
-              <div className="flex items-center gap-1 text-xs font-extrabold text-emerald-500">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>{dept.readinessScore}% Score</span>
-              </div>
-            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-black uppercase">
+                  {dept.code}
+                </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-xs font-extrabold text-emerald-500">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>{dept.readinessScore}% Score</span>
+                  </div>
 
-            <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                {dept.name}
-              </h2>
-              <p className="text-xs font-semibold text-slate-400 mt-1">
-                Department Lead: <strong className="text-slate-700 dark:text-slate-200">{dept.lead}</strong>
-              </p>
-            </div>
-
-            {/* Metrics Row */}
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Employees</span>
-                <span className="text-sm font-black text-slate-900 dark:text-white">{dept.employeeCount} Members</span>
+                  <button
+                    onClick={() => handleDeleteDepartment(dept.id, dept.name)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Delete Department"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Target Benchmark</span>
-                <span className="text-sm font-black text-indigo-500">{dept.targetScore}% Goal</span>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  {dept.name}
+                </h2>
+                <p className="text-xs font-semibold text-slate-400 mt-1">
+                  Department Lead: <strong className="text-slate-700 dark:text-slate-200">{dept.lead}</strong>
+                </p>
+              </div>
+
+              {/* Metrics Row */}
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Employees</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">{dept.employeeCount} Members</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Target Benchmark</span>
+                  <span className="text-sm font-black text-indigo-500">{dept.targetScore}% Goal</span>
+                </div>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
               <div className="flex justify-between text-[11px] font-extrabold text-slate-400">
                 <span>Readiness Progress</span>
                 <span className="text-purple-600 dark:text-purple-400">{dept.readinessScore}%</span>
@@ -160,9 +213,13 @@ const DepartmentsManagement = () => {
                   <input
                     type="number"
                     max={100}
-                    min={50}
+                    min={1}
+                    placeholder="e.g. 90"
                     value={newDept.targetScore}
-                    onChange={(e) => setNewDept({ ...newDept, targetScore: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/^0+(?=\d)/, '');
+                      setNewDept({ ...newDept, targetScore: val });
+                    }}
                     className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>

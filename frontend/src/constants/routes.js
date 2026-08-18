@@ -31,6 +31,7 @@ export const ROUTES = {
 
   // Admin
   ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_PROFILE: '/admin/profile',
   ADMIN_USERS: '/admin/users',
   ADMIN_ROLES: '/admin/roles',
   ADMIN_DEPARTMENTS: '/admin/departments',
