@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Users, 
   Building2, 
@@ -22,10 +22,9 @@ import {
   Tooltip, 
   Legend 
 } from 'recharts';
-import { hrService } from '../../services/hrService';
 
 // Data for Department Skill Readiness Bar Chart
-const DEFAULT_DEPARTMENT_READINESS = [
+const DEPARTMENT_READINESS_DATA = [
   { department: 'Engineering', readiness: 88 },
   { department: 'Product', readiness: 84 },
   { department: 'Design', readiness: 78 },
@@ -34,7 +33,7 @@ const DEFAULT_DEPARTMENT_READINESS = [
 ];
 
 // Data for Organization Skill Taxonomy Distribution Pie Chart
-const DEFAULT_TAXONOMY_DISTRIBUTION = [
+const TAXONOMY_DISTRIBUTION_DATA = [
   { name: 'Frontend', value: 35, color: '#3b82f6' },
   { name: 'Backend', value: 25, color: '#10b981' },
   { name: 'Cloud/DevOps', value: 20, color: '#6366f1' },
@@ -72,36 +71,6 @@ const CustomPieTooltip = ({ active, payload }) => {
 };
 
 const HrDashboard = () => {
-  const [stats, setStats] = useState({
-    totalWorkforce: 342,
-    avgReadiness: 83.4,
-    departmentsCount: 5,
-    completionRate: 91,
-    deptReadiness: DEFAULT_DEPARTMENT_READINESS,
-    taxonomyDistribution: DEFAULT_TAXONOMY_DISTRIBUTION,
-  });
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await hrService.getOverviewStats();
-      if (res.data) {
-        setStats({
-          totalWorkforce: res.data.total_workforce || 342,
-          avgReadiness: res.data.avg_readiness || 83.4,
-          departmentsCount: (res.data.department_readiness && res.data.department_readiness.length) || 5,
-          completionRate: 91,
-          deptReadiness: res.data.department_readiness || DEFAULT_DEPARTMENT_READINESS,
-          taxonomyDistribution: res.data.taxonomy_distribution || DEFAULT_TAXONOMY_DISTRIBUTION,
-        });
-      }
-    } catch (err) {
-      console.log('Using default HR overview telemetry.', err);
-    }
-  };
   return (
     <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
       {/* Top Hero Gradient Banner (Matching Photo) */}
@@ -117,87 +86,87 @@ const HrDashboard = () => {
         </h1>
 
         <p className="text-xs md:text-sm font-medium text-indigo-100 max-w-3xl leading-relaxed">
-          Real-time talent telemetry across {stats.departmentsCount} departments and {stats.totalWorkforce} active employees. Average skill readiness index is <strong className="text-emerald-300 font-black">{stats.avgReadiness}%</strong>.
+          Real-time talent telemetry across 5 departments and 342 active employees. Average skill readiness index is <strong className="text-emerald-300 font-black">83.4%</strong>.
         </p>
       </div>
 
       {/* 4 Stat Summary Cards (Matching Photo) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Workforce */}
-        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
+          <div className="space-y-1 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Total Workforce
             </p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {stats.totalWorkforce}
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              342
             </p>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <span className="text-emerald-500 font-black">+12 this month</span>
-              <span>• Active Employees</span>
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
+              <span className="text-emerald-500 font-black">+12 this mo</span>
+              <span>• Active Staff</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 text-blue-500" />
+          <div className="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5 text-blue-500" />
           </div>
         </div>
 
         {/* Card 2: Departments */}
-        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
+          <div className="space-y-1 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Departments
             </p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {stats.departmentsCount}
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              5
             </p>
-            <p className="text-xs font-semibold text-slate-400">
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
               Monitored teams
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Building2 className="w-6 h-6 text-purple-500" />
+          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5 text-purple-500" />
           </div>
         </div>
 
         {/* Card 3: Workforce Readiness */}
-        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
+          <div className="space-y-1 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Workforce Readiness
             </p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {stats.avgReadiness}%
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              83.4%
             </p>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
               <span className="text-emerald-500 font-black">+4.2% YoY</span>
-              <span>• Target skill match</span>
+              <span>• Target match</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5 text-emerald-500" />
           </div>
         </div>
 
         {/* Card 4: Assessment Completion */}
-        <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-center justify-between gap-3 transition-colors overflow-hidden">
+          <div className="space-y-1 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Assessment Completion
             </p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {stats.completionRate}%
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              91%
             </p>
-            <p className="text-xs font-semibold text-slate-400">
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">
               Monthly quota
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <CheckSquare className="w-6 h-6 text-purple-500" />
+          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-5 h-5 text-purple-500" />
           </div>
         </div>
       </div>
@@ -219,7 +188,7 @@ const HrDashboard = () => {
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
-                data={stats.deptReadiness} 
+                data={DEPARTMENT_READINESS_DATA} 
                 margin={{ top: 15, right: 20, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
@@ -263,7 +232,7 @@ const HrDashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={stats.taxonomyDistribution}
+                  data={TAXONOMY_DISTRIBUTION_DATA}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -271,7 +240,7 @@ const HrDashboard = () => {
                   paddingAngle={4}
                   dataKey="value"
                 >
-                  {stats.taxonomyDistribution.map((entry, index) => (
+                  {TAXONOMY_DISTRIBUTION_DATA.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

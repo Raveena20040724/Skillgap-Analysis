@@ -432,9 +432,9 @@ const EmployeeProfile = () => {
           </form>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Left Column (2 Cols): Experience, Education & Certifications, Projects */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Work Experience */}
             <Card className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-lg space-y-4">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">

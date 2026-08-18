@@ -19,21 +19,49 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       const response = await authService.getCurrentUser();
-      setUser(response.data);
+      const userData = response.data?.data || response.data;
+      if (userData) {
+        const savedRole = localStorage.getItem('user_role');
+        const role = userData?.role || savedRole || (userData?.is_superuser || userData?.username === 'admin' ? 'admin' : userData?.is_staff || userData?.username?.includes('hr') ? 'hr' : 'employee');
+        const enrichedUser = { ...userData, role };
+        setUser(enrichedUser);
+        localStorage.setItem('user', JSON.stringify(enrichedUser));
+        localStorage.setItem('user_role', role);
+      }
     } catch (error) {
       console.error('Session restore failed:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          const savedRole = localStorage.getItem('user_role') || parsed.role || (parsed.username === 'admin' ? 'admin' : parsed.username?.includes('hr') ? 'hr' : 'employee');
+          const enriched = { ...parsed, role: savedRole };
+          setUser(enriched);
+        } catch {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('user_role');
+        }
+      } else {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const login = (userData, access, refresh) => {
-    localStorage.setItem('accessToken', access);
-    localStorage.setItem('refreshToken', refresh);
+    if (access) localStorage.setItem('accessToken', access);
+    if (refresh) localStorage.setItem('refreshToken', refresh);
+    const savedRole = localStorage.getItem('user_role');
+    const role = userData?.role || savedRole || (userData?.is_superuser || userData?.username === 'admin' ? 'admin' : userData?.is_staff || userData?.username?.includes('hr') ? 'hr' : 'employee');
+    const enrichedUser = { ...userData, role };
+    localStorage.setItem('user', JSON.stringify(enrichedUser));
+    localStorage.setItem('user_role', role);
     const storedAvatar = localStorage.getItem('userAvatar');
-    setUser(storedAvatar ? { ...userData, avatar: storedAvatar } : userData);
+    setUser(storedAvatar ? { ...enrichedUser, avatar: storedAvatar } : enrichedUser);
   };
 
   const updateUser = (updatedData) => {

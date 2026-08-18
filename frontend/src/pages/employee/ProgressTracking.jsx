@@ -90,62 +90,62 @@ const ProgressTracking = () => {
       </div>
 
       {/* Top 4 Stat Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Learning Hours */}
-        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6 text-purple-500" />
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-purple-500" />
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Total Learning Hours
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
               114 hrs
             </p>
           </div>
         </div>
 
         {/* Card 2: Completed Courses */}
-        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <BookOpen className="w-6 h-6 text-blue-500" />
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-blue-500" />
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Completed Courses
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
               6 Courses
             </p>
           </div>
         </div>
 
         {/* Card 3: Certificates Earned */}
-        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <Award className="w-6 h-6 text-emerald-500" />
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Award className="w-5 h-5 text-emerald-500" />
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Certificates Earned
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
               4 Certs
             </p>
           </div>
         </div>
 
         {/* Card 4: Avg Assessment Score */}
-        <div className="p-6 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-            <CheckSquare className="w-6 h-6 text-amber-500" />
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-5 h-5 text-amber-500" />
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
               Avg Assessment Score
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
               91.6%
             </p>
           </div>

@@ -54,59 +54,75 @@ const SystemReports = () => {
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadedMsg, setDownloadedMsg] = useState('');
 
-  const triggerDownload = (filename, content, mimeType = 'text/plain;charset=utf-8;') => {
+  const triggerFileDownload = (content, filename, mimeType) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
   const handleDownload = (report) => {
     setDownloadingId(report.id);
+    
     setTimeout(() => {
-      setDownloadingId(null);
+      let content = '';
+      let filename = '';
+      let mimeType = 'text/plain';
 
       if (report.id === 1) {
-        // CSV Skill Readiness Report
-        const csvRows = [
-          'Employee ID,Full Name,Email,Department,Designation,Skill Score,Identified Gaps,Readiness Status',
-          'EMP-101,Alex Morgan,alex.morgan@company.com,Engineering,Frontend Developer,88%,Kubernetes/GraphQL,Ready',
-          'EMP-102,Marcus Vance,admin@company.com,Operations,System Administrator,96%,None,Certified',
-          'EMP-103,Sarah Jenkins,sarah.jenkins@company.com,HR,People Lead,92%,BigQuery Analytics,Certified',
-          'EMP-104,David Kim,david.kim@company.com,Engineering,Backend Engineer,74%,Microservices/Docker,In Training',
-          'EMP-105,Elena Rostova,elena.rostova@company.com,Design,Product Designer,85%,Figma Design Systems,Ready'
-        ].join('\n');
-        triggerDownload('Organization_Skill_Readiness_Report.csv', csvRows, 'text/csv;charset=utf-8;');
+        filename = 'SkillBridge_Organization_Skill_Readiness_Audit.csv';
+        mimeType = 'text/csv;charset=utf-8;';
+        content = `Department,Department Code,Employees,Target Benchmark %,Readiness Score %,Key Skill Gaps,Status\n` +
+          `Engineering,ENG,145,90%,88%,Kubernetes; Micro-frontends; GraphQL,Optimal\n` +
+          `Product Management,PRD,62,85%,84%,Data Analytics; SQL; Product Strategy,Optimal\n` +
+          `UI/UX Design,DSG,40,82%,78%,Design Systems; Figma Variables; Prototyping,Attention Required\n` +
+          `DevOps & Infra,OPS,35,90%,92%,Terraform; Cloud Security; CI/CD,Exceeding Benchmark\n` +
+          `Data Science & AI,DAT,60,85%,81%,PyTorch; LLM Fine-Tuning; Prompt Engineering,Optimal\n`;
       } else if (report.id === 2) {
-        // JSON Security Telemetry Log
-        const securityLogs = {
-          auditVersion: '2.4.0',
-          generatedAt: new Date().toISOString(),
-          systemStatus: 'COMPLIANT_SECURE',
-          activeRBACRoles: ['admin', 'hr', 'employee'],
-          events: [
-            { timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'admin@company.com', action: 'LOGIN_SUCCESS', ip: '192.168.1.45', mfa: 'PASSED' },
-            { timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'sarah.jenkins@company.com', action: 'ASSESSMENT_BENCHMARK_UPDATE', target: 'Engineering' },
-            { timestamp: new Date(Date.now() - 10800000).toISOString(), user: 'alex.morgan@company.com', action: 'RESUME_PARSED', extractedSkills: 8 }
-          ]
-        };
-        triggerDownload('Security_Access_Telemetry_Audit.json', JSON.stringify(securityLogs, null, 2), 'application/json;charset=utf-8;');
+        filename = 'SkillBridge_Security_Audit_Telemetry.json';
+        mimeType = 'application/json';
+        content = JSON.stringify({
+          system: 'SkillBridge.AI Telemetry Core',
+          generated_at: new Date().toISOString(),
+          audit_period: 'Last 30 Days',
+          audit_logs: [
+            { id: 'log_901', timestamp: '2026-08-18T09:42:11Z', actor: 'admin@company.com', action: 'RBAC_POLICY_UPDATE', target: 'HR_MANAGER_ROLE', status: 'SUCCESS' },
+            { id: 'log_902', timestamp: '2026-08-18T09:15:00Z', actor: 'sarah.jenkins@company.com', action: 'TALENT_ASSESSMENT_SYNC', target: 'ENGINEERING_DEPT', status: 'SUCCESS' },
+            { id: 'log_903', timestamp: '2026-08-18T08:30:22Z', actor: 'alex.morgan@company.com', action: 'SKILL_GAP_INFERENCE', target: 'SR_FRONTEND_ROLE', status: 'SUCCESS' }
+          ],
+          security_summary: {
+            zero_trust_status: 'Compliant',
+            mfa_otp_enforced: true,
+            active_sessions: 48
+          }
+        }, null, 2);
       } else if (report.id === 3) {
-        // AI Model Token Telemetry
-        const textReport = `=====================================================\nSKILLBRIDGE AI MODEL INFERENCE TOKEN TELEMETRY REPORT\n=====================================================\nGenerated: ${new Date().toLocaleString()}\nTarget Model: Google Gemini 3.5 Flash & Grok AI Engine\n\n1. TOTAL INFERENCE CALLS: 1,482 calls\n2. AVERAGE LATENCY: 240ms\n3. TOTAL PROMPT TOKENS: 412,890 tokens\n4. TOTAL COMPLETION TOKENS: 198,450 tokens\n5. ERROR RATE: 0.02% (Healthy REST Endpoints)\n\nSTATUS: Active & Operational\n=====================================================\n`;
-        triggerDownload('AI_Model_Token_Telemetry_Report.txt', textReport, 'text/plain;charset=utf-8;');
+        filename = 'SkillBridge_AI_Inference_Telemetry.csv';
+        mimeType = 'text/csv;charset=utf-8;';
+        content = `Model Name,Endpoint Latency (ms),Token Usage (24h),Success Rate %,Error Count\n` +
+          `Google Gemini 3.5 Flash,142ms,284190 tokens,99.8%,0\n` +
+          `Skill Telemetry Embeddings,86ms,114200 tokens,100%,0\n` +
+          `Resume Parser Extractor,210ms,92400 tokens,99.5%,1\n`;
       } else {
-        // HR Analytics
-        const hrReport = `=====================================================\nDEPARTMENT SKILL GAP & COURSE FULFILLMENT REPORT\n=====================================================\nGenerated: ${new Date().toLocaleString()}\nTotal Assessed Employees: 342\nTotal Departments: 5\n\n1. Engineering: 82% Avg Readiness (Top Gap: Kubernetes)\n2. Product Management: 88% Avg Readiness (Top Gap: SQL Analytics)\n3. Human Resources: 94% Avg Readiness (Top Gap: None)\n4. Quality Assurance: 79% Avg Readiness (Top Gap: Cypress E2E)\n5. Design & UX: 90% Avg Readiness (Top Gap: Design Tokens)\n=====================================================\n`;
-        triggerDownload('Department_Skill_Gap_Course_Fulfillment.txt', hrReport, 'text/plain;charset=utf-8;');
+        filename = 'SkillBridge_Department_Skill_Gap_Fulfillment.csv';
+        mimeType = 'text/csv;charset=utf-8;';
+        content = `Department,Identified Gaps,Assigned Courses,Enrollment Count,Completion Rate %\n` +
+          `Engineering,42,8,138,82%\n` +
+          `Product,18,4,58,79%\n` +
+          `Design,14,3,38,87%\n` +
+          `DevOps,9,3,34,94%\n` +
+          `Data Science,22,5,56,76%\n`;
       }
 
-      setDownloadedMsg(`✅ Successfully downloaded ${report.title} (${report.format})`);
+      triggerFileDownload(content, filename, mimeType);
+
+      setDownloadingId(null);
+      setDownloadedMsg(`✅ Downloaded "${filename}" successfully!`);
       setTimeout(() => setDownloadedMsg(''), 4000);
     }, 600);
   };
